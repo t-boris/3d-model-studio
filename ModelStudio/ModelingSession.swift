@@ -6,7 +6,6 @@ final class ModelingSession: ObservableObject {
     @Published private(set) var review: GeometryAccessReview?
     @Published private(set) var message = ""
     @Published private(set) var busy = false
-    @Published private(set) var patch: AgentMeshPatch?
 
     @Published private(set) var submittedInstruction = ""
     @Published private(set) var question: String?
@@ -29,7 +28,6 @@ final class ModelingSession: ObservableObject {
         task?.cancel()
         finish("")
         proposal = nil
-        patch = nil
         pendingTurn = nil
         let instruction = instruction.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !instruction.isEmpty else { message = "Enter a modeling instruction."; return }
@@ -47,23 +45,30 @@ final class ModelingSession: ObservableObject {
         dispatch()
     }
 
-    func apply(to workspace: Workspace) {
-        guard let proposal, let pendingTurn else { return }
+    @discardableResult
+    func apply(to workspace: Workspace, confirmedProposal: UUID? = nil) -> Bool {
+        guard let proposal, let pendingTurn else { return false }
+        if let confirmedProposal, confirmedProposal != proposal.id { return false }
+        guard !proposal.requiresConfirmation || confirmedProposal == proposal.id else { return false }
+        defer {
+            self.proposal = nil
+            self.pendingTurn = nil
+        }
         do {
-            try proposal.apply(to: workspace)
+            try proposal.apply(to: workspace, confirmedProposal: confirmedProposal)
             lastApplied = workspace.activeModel
             appliedTurns.append(pendingTurn)
             message = "Applied. " + pendingTurn.result
-        } catch { message = error.localizedDescription }
-        self.proposal = nil
-        self.pendingTurn = nil
-        patch = nil
+            return true
+        } catch {
+            message = error.localizedDescription
+            return false
+        }
     }
 
     func discard() {
         proposal = nil
         pendingTurn = nil
-        patch = nil
         message = "Proposal discarded."
     }
 
@@ -83,7 +88,6 @@ final class ModelingSession: ObservableObject {
     func cancel() {
         task?.cancel()
         finish("")
-        patch = nil
         proposal = nil
         pendingTurn = nil
         appliedTurns = []
@@ -118,12 +122,9 @@ final class ModelingSession: ObservableObject {
                         review = self.operation?.review
                         message = ""
                     case let .proposal(summary, changes):
-                        if operation.scope.target == nil {
-                            proposal = try ModelingProposal(operation: operation, patch: changes)
-                            pendingTurn = AppliedModelingTurn(instruction: operation.instruction,
-                                                              clarifications: operation.clarifications, result: summary)
-                        }
-                        patch = changes
+                        proposal = try ModelingProposal(operation: operation, patch: changes)
+                        pendingTurn = AppliedModelingTurn(instruction: operation.instruction,
+                                                          clarifications: operation.clarifications, result: summary)
                         finish(summary)
                     case let .question(text):
                         question = text

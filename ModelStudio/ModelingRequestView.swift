@@ -13,7 +13,7 @@ struct ModelingRequestView: View {
     @State private var instruction = ""
 
     private var currentScope: ModelingScope {
-        if !session.appliedTurns.isEmpty, let model = workspace.activeModel { return .revision(model) }
+        if scope.target == nil, !session.appliedTurns.isEmpty, let model = workspace.activeModel { return .revision(model) }
         return scope
     }
 
@@ -66,11 +66,23 @@ struct ModelingRequestView: View {
                     Button("Share Listed Faces") { session.answer(review.id, allow: true) }
                 }
             } else if let proposal = session.proposal {
-                ModelViewport(mesh: proposal.preview.mesh, selectedFaces: [], selectedPoint: nil) { _, _ in }
-                    .frame(height: 180).accessibilityLabel("Proposed model")
+                if proposal.requiresConfirmation, let original = proposal.original, let impact = proposal.impact {
+                    Text("Changes outside the selection").font(.headline)
+                    Text("Orange shows changes outside your selection. Indigo shows affected selected faces.")
+                    let inside = impact.affected.subtracting(impact.outside)
+                    HStack {
+                        reviewViewport("Original", mesh: original.mesh, highlight: impact.outside, inside: inside)
+                        reviewViewport("Proposed", mesh: proposal.preview.mesh, highlight: impact.outside, inside: inside)
+                    }
+                } else {
+                    reviewViewport("Proposed", mesh: proposal.preview.mesh, highlight: proposal.impact?.affected ?? [])
+                }
                 ScrollView {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(session.message)
+                        if let outside = proposal.impact?.outside, !outside.isEmpty {
+                            Text("Outside face IDs · " + outside.sorted().map(String.init).joined(separator: ", "))
+                        }
                         Text("Proposed dimensions").font(.headline)
                         ForEach(ModelDimension.allCases, id: \.self) { dimension in
                             let span = proposal.preview.extents[dimension.axis].formatted()
@@ -87,19 +99,19 @@ struct ModelingRequestView: View {
             } else if !session.message.isEmpty && session.question == nil {
                 ScrollView {
                     Text(session.message).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
-                    if let patch = session.patch {
-                        Text("Proposed changes · \(patch.vertices.count) vertex updates, \(patch.faces.count) face updates, \(patch.removedFaceIDs.count) face removals")
-                            .font(.caption)
-                    }
                 }.frame(maxHeight: 120)
             }
             HStack {
                 Button("Close") { session.cancel(); dismiss() }.keyboardShortcut(.cancelAction)
                 Spacer()
                 if session.busy { ProgressView().controlSize(.small) }
-                if session.proposal != nil {
-                    Button("Discard", action: session.discard)
-                    Button("Apply to Model") { session.apply(to: workspace) }.keyboardShortcut(.defaultAction)
+                if let proposal = session.proposal {
+                    Button(proposal.requiresConfirmation ? "Decline Edit" : "Discard", action: session.discard)
+                    if proposal.requiresConfirmation {
+                        Button("Confirm Outside Changes") { apply(confirmation: proposal.id) }
+                    } else {
+                        Button("Apply to Model") { apply() }.keyboardShortcut(.defaultAction)
+                    }
                 } else {
                     Button(session.question == nil ? "Send Request" : "Send Answer", action: send)
                         .disabled(instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -109,5 +121,19 @@ struct ModelingRequestView: View {
         }
         .padding(20).frame(width: 460)
         .onDisappear { session.cancel() }
+    }
+
+    private func reviewViewport(_ title: String, mesh: EditableMesh, highlight: Set<Int>, inside: Set<Int> = []) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.caption)
+            ModelViewport(mesh: mesh, selectedFaces: highlight, selectedPoint: nil, affectedSelection: inside) { _, _ in }
+                .frame(height: 160).accessibilityLabel("\(title) model")
+        }
+    }
+
+    private func apply(confirmation: UUID? = nil) {
+        if session.apply(to: workspace, confirmedProposal: confirmation), scope.target != nil {
+            dismiss()
+        }
     }
 }

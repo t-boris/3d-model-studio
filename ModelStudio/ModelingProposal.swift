@@ -1,15 +1,66 @@
 import Foundation
 import simd
 
-struct ModelingProposal {
+// Compare stable mesh identities locally, including the connectivity of triangles
+// omitted from the provider's input. Vertex indices survive patch application.
+struct SelectionImpact {
+    let affected: Set<Int>
+    let outside: Set<Int>
+
+    init(original: EditableMesh, proposed: EditableMesh, selection: Set<Int>) {
+        let old = Dictionary(uniqueKeysWithValues: original.faces.map { ($0.id, $0.vertices) })
+        let new = Dictionary(uniqueKeysWithValues: proposed.faces.map { ($0.id, $0.vertices) })
+        var affected = Set<Int>()
+        var changedVertices = Set<Int>()
+        var changedEdges = Set<SIMD2<Int>>()
+
+        func corners(_ triangle: SIMD3<Int>?) -> Set<Int> {
+            guard let triangle else { return [] }
+            return [triangle.x, triangle.y, triangle.z]
+        }
+        func directedEdges(_ triangle: SIMD3<Int>?) -> Set<SIMD2<Int>> {
+            guard let v = triangle else { return [] }
+            return [[v.x, v.y], [v.y, v.z], [v.z, v.x]]
+        }
+
+        // A face can retain every coordinate and corner yet gain or lose an
+        // incident face. Track changes per vertex and oriented edge per face ID.
+        for id in Set(old.keys).union(new.keys) where old[id] != new[id] {
+            let edges = directedEdges(old[id]).symmetricDifference(directedEdges(new[id]))
+            guard !edges.isEmpty else { continue } // Cyclic corner rotation.
+            affected.insert(id)
+            changedVertices.formUnion(corners(old[id]).symmetricDifference(corners(new[id])))
+            for e in edges { changedEdges.insert([min(e.x, e.y), max(e.x, e.y)]) }
+        }
+        for i in original.vertices.indices where original.vertices[i] != proposed.vertices[i] {
+            changedVertices.insert(i)
+        }
+
+        // Removed faces are already marked above. Every surviving face can be
+        // checked on its final corners because a rewired face is also marked.
+        for face in proposed.faces where !affected.contains(face.id) {
+            for i in 0..<3 {
+                let a = face.vertices[i], b = face.vertices[(i + 1) % 3]
+                if changedVertices.contains(a) || changedEdges.contains([min(a, b), max(a, b)]) {
+                    affected.insert(face.id)
+                    break
+                }
+            }
+        }
+        self.affected = affected
+        outside = affected.subtracting(selection)
+    }
+}
+
+struct ModelingProposal: Identifiable {
+    let id = UUID()
+    let impact: SelectionImpact?
+    var requiresConfirmation: Bool { impact?.outside.isEmpty == false }
     let original: WorkspaceModel?
     let preview: WorkspaceModel
     let requested: [DimensionTarget]
 
     init(operation: ModelingOperation, patch: AgentMeshPatch) throws {
-        guard operation.scope.target == nil else {
-            throw MeshImportError("A selection edit requires affected-face review.")
-        }
         guard let constraints = patch.unsupportedConstraints, let dimensions = patch.requestedDimensions else {
             throw MeshImportError("The provider omitted its dimensional assessment. Request a new proposal.")
         }
@@ -20,7 +71,18 @@ struct ModelingProposal {
         original = operation.scope.model
         requested = try ConversationDimensions.targets(input: input, interpreted: dimensions, original: original)
         let mesh = try patch.applying(to: original?.mesh ?? EditableMesh(), visible: input)
-        if var model = original {
+        if let selection = operation.scope.target, let original {
+            let impact = SelectionImpact(original: original.mesh, proposed: mesh, selection: selection)
+            guard !impact.affected.isEmpty else { throw MeshImportError("The proposal makes no surface change.") }
+            self.impact = impact
+        } else {
+            impact = nil
+        }
+        if impact?.outside.isEmpty == false, let original {
+            // Let the user inspect the actual region even when its dimensions
+            // conflict. Only the live workspace may publish this candidate.
+            preview = try WorkspaceModel(name: original.name, unit: input.unit, mesh: mesh)
+        } else if var model = original {
             try model.commit(mesh, requested: requested)
             preview = model
         } else {
@@ -29,7 +91,10 @@ struct ModelingProposal {
     }
 
     @MainActor
-    func apply(to workspace: Workspace) throws {
+    func apply(to workspace: Workspace, confirmedProposal: UUID? = nil) throws {
+        guard !requiresConfirmation || confirmedProposal == id else {
+            throw MeshImportError("Review and confirm this proposal’s changes outside the selection.")
+        }
         if let original {
             try workspace.commit(preview.mesh, basedOn: original, requested: requested)
         } else {

@@ -30,6 +30,7 @@ struct ModelViewport: NSViewRepresentable {
     let mesh: EditableMesh
     let selectedFaces: Set<Int>
     let selectedPoint: Int?
+    var affectedSelection: Set<Int> = []
     let pick: (Int, Int) -> Void
 
     final class Coordinator {
@@ -38,6 +39,7 @@ struct ModelViewport: NSViewRepresentable {
         let marker = SCNNode(geometry: SCNSphere(radius: 0.028))
         var displayed: EditableMesh?
         var highlighted: Set<Int> = []
+        var highlightedSelection: Set<Int> = []
         var faceGroups: [[Int]] = []
         var positions: [SCNVector3] = []
         var vertexSource: SCNGeometrySource?
@@ -51,7 +53,7 @@ struct ModelViewport: NSViewRepresentable {
             marker.geometry?.firstMaterial?.diffuse.contents = NSColor.systemOrange
         }
 
-        func update(mesh: EditableMesh, selection: Set<Int>, point: Int?) {
+        func update(mesh: EditableMesh, selection: Set<Int>, point: Int?, affectedSelection: Set<Int> = []) {
             let changed = displayed != mesh
             if changed {
                 // Normalize the display copy. Source coordinates and face IDs remain in model space.
@@ -88,19 +90,24 @@ struct ModelViewport: NSViewRepresentable {
                 displayed = mesh
             }
 
-            if changed || selection != highlighted {
+            if changed || selection != highlighted || affectedSelection != highlightedSelection {
                 // SceneKit returns an element and primitive index. Keep their
                 // mapping to mesh faces even when a selected face changes color.
-                let groups = Dictionary(grouping: mesh.faces.indices) { selection.contains(mesh.faces[$0].id) }
+                let groups = Dictionary(grouping: mesh.faces.indices) { index -> Int in
+                    let id = mesh.faces[index].id
+                    if selection.contains(id) { return 1 }
+                    return affectedSelection.contains(id) ? 2 : 0
+                }
+                let colors: [NSColor] = [.systemTeal, .systemOrange, .systemIndigo]
                 var elements: [SCNGeometryElement] = []
                 var materials: [SCNMaterial] = []
                 faceGroups = []
-                for selected in [false, true] {
-                    guard let faces = groups[selected] else { continue }
+                for group in colors.indices {
+                    guard let faces = groups[group] else { continue }
                     let indices = faces.flatMap { i in [UInt32(i * 3), UInt32(i * 3 + 1), UInt32(i * 3 + 2)] }
                     elements.append(SCNGeometryElement(indices: indices, primitiveType: .triangles))
                     let material = SCNMaterial()
-                    material.diffuse.contents = selected ? NSColor.systemOrange : NSColor.systemTeal
+                    material.diffuse.contents = colors[group]
                     material.isDoubleSided = true
                     materials.append(material)
                     faceGroups.append(faces)
@@ -109,6 +116,7 @@ struct ModelViewport: NSViewRepresentable {
                 geometry.materials = materials
                 surface.geometry = geometry
                 highlighted = selection
+                highlightedSelection = affectedSelection
             }
 
             marker.isHidden = true
@@ -163,7 +171,7 @@ struct ModelViewport: NSViewRepresentable {
 
     func updateNSView(_ view: PickingSceneView, context: Context) {
         let coordinator = context.coordinator
-        coordinator.update(mesh: mesh, selection: selectedFaces, point: selectedPoint)
+        coordinator.update(mesh: mesh, selection: selectedFaces, point: selectedPoint, affectedSelection: affectedSelection)
         view.onPick = { [weak view] location in
             guard let hit = view?.hitTest(location, options: [.categoryBitMask: 1, .backFaceCulling: false]).first,
                   hit.node === coordinator.surface,

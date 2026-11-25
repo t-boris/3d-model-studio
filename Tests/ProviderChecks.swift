@@ -65,7 +65,7 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
         await recorder.respond([scope.model == nil ? create : revise])
         session.start(scope: scope, instruction: instruction, defaults: defaults)
         try await settle(session)
-        precondition(session.patch?.vertices.first?.position == [0,2,0])
+        precondition(session.proposal?.preview.mesh.vertices[scope.model == nil ? 0 : 2] == [0,2,0])
         let call = await recorder.captured.last!
         precondition(call.provider == provider && call.model == provider.models.last!)
         precondition(call.json["instruction"] as? String == instruction)
@@ -92,7 +92,10 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
     }
 
     let scope = ModelingScope.selection(model, [0])
-    await recorder.respond([ask, proposal])
+    let selectedReply = try wire(AgentMeshPatch(vertices: [.init(id: 2, position: [0, 2, 0])],
+                                                   faces: [], removedFaceIDs: [], requestedDimensions: [],
+                                                   unsupportedConstraints: []))
+    await recorder.respond([ask, selectedReply])
     session.start(scope: scope, instruction: instruction, defaults: defaults)
     try await settle(session)
     let initial = await recorder.captured.last!
@@ -113,7 +116,7 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
     precondition(approved.json["readOnlyFaceIDs"] as? [Int] == [1])
     precondition(approved.json["targetFaceIDs"] as? [Int] == [0])
     precondition(approved.raw.contains("7.125") && !approved.raw.contains("918273"))
-    precondition(session.review == nil && session.patch != nil)
+    precondition(session.review == nil && session.proposal != nil)
 
     await recorder.respond([ask])
     session.start(scope: scope, instruction: instruction, defaults: defaults)
@@ -126,7 +129,7 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
     precondition(denied.id != review.id)
     let before = await recorder.captured.count
     session.answer(denied.id, allow: false)
-    precondition(session.review == nil && session.message.contains(denied.reason) && session.patch == nil)
+    precondition(session.review == nil && session.message.contains(denied.reason) && session.proposal == nil)
     session.answer(denied.id, allow: true)
     let after = await recorder.captured.count
     precondition(after == before)
@@ -147,7 +150,7 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
         await recorder.respond([bad])
         session.start(scope: scope, instruction: instruction, defaults: defaults)
         try await settle(session)
-        precondition(session.review == nil && session.patch == nil && !session.message.isEmpty)
+        precondition(session.review == nil && session.proposal == nil && !session.message.isEmpty)
     }
     let invalidCount = await recorder.captured.count
     session.start(scope: .selection(model, [987]), instruction: instruction, defaults: defaults)

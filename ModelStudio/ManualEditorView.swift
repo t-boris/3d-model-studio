@@ -88,6 +88,9 @@ struct ManualEditorView: View {
             .padding(10)
             .background(.bar)
         }
+        .onChange(of: model.mesh.faces) { _, faces in
+            selectedFaces.formIntersection(faces.map(\.id))
+        }
     }
 
     @ViewBuilder private var selectionLabel: some View {

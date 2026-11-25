@@ -1,5 +1,5 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-cat ModelStudio/{EditableMesh,ModelDimensions,STLReader,OBJReader,ThreeMFReader,ManualMeshEdit,EditableModelFile,Workspace,ModelingContext,ConversationDimensions,ModelingProposal,ModelingProvider,ModelingSession,ModelViewport}.swift Tests/{ProviderChecks,ConversationChecks}.swift | xcrun swift -
+cat ModelStudio/{EditableMesh,ModelDimensions,STLReader,OBJReader,ThreeMFReader,ManualMeshEdit,EditableModelFile,Workspace,ModelingContext,ConversationDimensions,ModelingProposal,ModelingProvider,ModelingSession,ModelViewport}.swift Tests/{ProviderChecks,ConversationChecks,SelectionChecks}.swift | xcrun swift -
 python3 Tests/AntigravityAdapterChecks.py
