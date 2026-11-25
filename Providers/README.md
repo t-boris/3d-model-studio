@@ -35,7 +35,10 @@ All three adapters receive the same native projection as UTF-8 JSON following th
 - **Selection** includes the instruction, target face IDs, those triangles, their referenced vertices and perimeter edges. File names, unrelated faces, isolated vertices, pins and whole-model measurements are excluded.
 - An agent may request particular face IDs or neighbors across identified perimeter edges. The studio resolves them against the operation snapshot and highlights the additional triangles locally and presents their exact IDs and the reason. An approval token belongs to that one pending review.
 - Approval resends the original instruction, original target and specifically approved context. The additional faces are labeled read-only. Declining displays the reason and ends the request. Closing, replacing, failing, or completing a request expires its approvals. Every new request takes a fresh Settings snapshot.
-- The reply is a typed explanation, access request or indexed mesh patch. A patch can describe added, changed or removed geometry. The provider has no workspace commit capability.
+- A question keeps the original instruction, current-operation questions and answers, route and model together. After Apply, a new revision in the same sheet includes the accepted turn history and current surface. Prior dimensional targets expire. Closing the sheet clears the history.
+- A whole-model proposal includes an indexed patch, requested dimensional targets and a list of unsupported constraints. Negative vertex and face IDs are local to that patch. Existing IDs refer to the supplied surface. The studio rejects malformed references, conflicting edits, collapsed changed faces and unsupported constraints before review.
+- The studio independently recognizes common explicit whole-model spans such as “7 mm tall”, “height to 7 mm”, “20 × 10 × 7 mm” and a length in answer to a question naming one axis. The provider interprets other phrasing as final axis spans or reports an unsupported constraint. Review shows the requested values alongside the locally measured spans. Apply uses the current workspace geometry and pins for the final check.
+- The sheet displays selection patch counts. Applying a selection patch awaits affected-region review in the selected-face editing task.
 
 ## Verification evidence
 
@@ -46,3 +49,5 @@ All three adapters receive the same native projection as UTF-8 JSON following th
 | Antigravity | Captured both Gemini choices at the Swift boundary. The packaged Python adapter passed the exact input and chosen model to an SDK double with the deny-by-default, finish-only policy. The same workflow and disclosure checks passed. |
 
 The checks use the production session, request encoder, provider routes and response decoder with a scripted transport. A local echo process also verified the native subprocess I/O with a 300 KB payload for each route. Run `Tests/run-provider-checks.sh` from the checkout. Authenticated model access, runtime image execution and live modeling quality require separate verification.
+
+The same harness also runs the conversational geometry checks. For each route it creates a block after a clarification, revises that block and revises fresh STL, OBJ and 3MF imports. It checks physical spans, face identity, SceneKit updates and preservation of the current model after a rejection or provider failure.

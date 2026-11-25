@@ -95,3 +95,7 @@ Cockpit I-5 / current plan's Agent integrations and model settings task: impleme
 ### Agent · 2026-11-25
 
 Managed I-6 (conversational creation and whole-model revision) is in progress. Clarifications will retain the operation’s description, answers, geometry and route. The studio will resolve indexed patches locally, review operation-specific dimensional targets, and publish through I-3. Selection proposal application remains a separate task. Verification will use scripted replies at the existing adapter boundary and all three I-2 imports.
+
+### Agent · 2026-11-25
+
+Managed I-6 implementation complete in 04a8e98. The interpreted provider harness passed all twelve route/origin combinations, including repeated revisions of each import, and verified local preview, SceneKit updates, current pins, requested lengths and rejection. Dimension and manual-edit suites passed. Application sources type-checked for macOS 14 with warnings as errors. No app build, interactive launch, authenticated provider run or deployment occurred. The reserved lifecycle and externally renumbered plan files remain under supervisor control. Selected-face application remains assigned separately.

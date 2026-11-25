@@ -18,6 +18,12 @@ Each proposed span must fall within **±0.01 mm**, inclusive, of its target afte
 
 Use **Save Editable Model…** (Command-S) to write a `.studio3d` file. Use **Open…** (Command-O) to resume editing. The file stores the indexed mesh and face identities, model unit, and explicit pins with their target values and units.
 
+## Conversational modeling
+
+Choose **Create from Description…** in an empty workspace, or **Ask Agent → Revise Entire Model…** on an open model. Describe the shape or change. For example, ask for a block 2 cm wide and 1 cm deep. If the agent asks for the height, enter a value and unit and choose **Send Answer**.
+
+Review the proposed surface, measured spans and requested dimensions. **Apply to Model** updates the workspace and lets you continue the conversation on the edited geometry. **Discard** keeps the previous model. A conflicting pin or unsupported measurement appears in the sheet. Closing the sheet ends its conversation.
+
 ## v1 scope
 
 - Open STL, OBJ, and 3MF models as editable geometry and inspect them in a 3D viewport.
@@ -26,7 +32,7 @@ Use **Save Editable Model…** (Command-S) to write a `.studio3d` file. Use **Op
 - Save editable models for later work and export geometry for slicing while preserving physical dimensions.
 - Use Codex, Claude, or Antigravity for conversational modeling. All three integrations are required in v1, with agent switching and model selection in Settings.
 
-Settings route modeling requests to Codex CLI, Claude Code, or Google's Antigravity SDK. Each runs in a disposable container with operation-scoped geometry. The adapters return proposals for review. Live provider access and conversational application of patches still require verification. [Provider setup, model choices and evidence](Providers/README.md)
+Settings route modeling requests to Codex CLI, Claude Code, or Google's Antigravity SDK. Each runs in a disposable container with operation-scoped geometry. Offline tests cover clarification, creation and whole-model revision through all three routes. Authenticated service access and interactive app use still need verification. [Provider setup, model choices and evidence](Providers/README.md)
 
 ## Specification
 
