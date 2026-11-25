@@ -1,105 +1,106 @@
 ---
 type: plan
 feature: 3d-model-studio
-title: 3D Model Studio v1
+title: 3D Model Studio v1 implementation and release acceptance
 issues:
   - id: I-1
-    title: Build the native macOS workspace
-    summary: Build the native macOS application shell with a Swift UI, an active model workspace, and an entry point for settings. Verify that the application launches on macOS and opens the workspace.
-    requirements: [REQ-001]
-    decisions: []
-  - id: I-2
-    title: Import and view editable STL, OBJ, and 3MF models
-    summary: Open STL, OBJ, and 3MF models in a viewport with rotation and zoom. Import each format as editable geometry in the active workspace. Use a fixture for each format to verify viewing and demonstrate one supported manual edit and one supported conversational edit.
+    title: Import and view editable models
+    summary: Support opening, orbiting, zooming, and editing STL, OBJ, Core 3MF, and multipart 3MF Production models in the native viewport. Prompt for STL and OBJ source units, honor 3MF units and transforms, and preserve stable face IDs, shared vertices, and assembly occurrence mappings in the editable mesh. Verify physical placement and supported manual and conversational edits with Bambu Studio and Orca Slicer fixtures. Reject missing, invalid, cyclic, or external model-part references while preserving the active workspace.
     requirements: [REQ-002]
-    decisions: [DEC-001, DEC-004]
+    decisions: [DEC-001, DEC-004, DEC-015, DEC-016]
+  - id: I-2
+    title: Enforce dimensions and pins in manual editing
+    summary: Provide point movement, surface reshaping, planar patch extrusion, and numerical dimension controls in explicit units. Use a shared commit path to enforce operation-specific dimensions and persistent pins within the documented ±0.01 mm tolerance. Verify that users can add, change, and remove pins on new and imported models, and that a conflicting edit identifies the dimension and preserves geometry and pins.
+    requirements: [REQ-003, REQ-004]
+    decisions: [DEC-002, DEC-005]
   - id: I-3
-    title: Enforce requested and pinned dimensions across edits
-    summary: Define the supported dimensional measurements and numerical tolerance. Implement a shared check for explicit dimensions and units before applying geometry changes. Support pinning, changing, and unpinning dimensions on new and imported models. Verify that ordinary dimensions apply to one operation, that pinned dimensions apply to subsequent manual and AI edits, and that a violation identifies the conflicting dimension and leaves the geometry unchanged, including after confirmation of an edit outside the selection.
-    requirements: [REQ-003, REQ-004, REQ-005]
-    decisions: [DEC-002, DEC-005, DEC-009]
+    title: Create and revise models with locally verified dimensions
+    summary: Support clarified creation from an empty workspace and iterative revision of new and imported models through the configured agent. Give each agent the geometry permitted for creation or whole-model revision. Document supported dimension wording, extract targets locally, ask the user to restate ambiguous targets, and report unsupported constraints. Share the dimension checks with selection edits and verify that a proposal matching the agent’s interpretation still cannot apply while a user-specified dimension remains unresolved.
+    requirements: [REQ-003, REQ-005, REQ-006]
+    decisions: [DEC-001, DEC-002, DEC-005, DEC-007, DEC-011]
   - id: I-4
-    title: Implement direct geometry editing and numerical controls
-    summary: Implement direct point movement, surface reshaping, and extrusion of selected geometry within the supported v1 modeling capabilities. Let users inspect and enter supported dimensions in explicit units. Route proposed edits through the shared dimensional checks and verify the workflow on new and imported models.
-    requirements: [REQ-004]
-    decisions: [DEC-001, DEC-002, DEC-005]
-  - id: I-5
-    title: Integrate all three agents with model settings and geometry access controls
-    summary: Verify a supported integration method and the required modeling workflows for Codex, Claude, and Antigravity. Add settings for choosing an agent and a model it supports, and route subsequent requests through that choice. Enforce the same geometry access rules across all three integrations. Provide the description and in-progress geometry for creation, permit access to the active model for whole-model revision, and initially supply only selected faces and boundary geometry for selection edits. Identify and explain requests for additional geometry, share only the approved parts for the current operation, and verify that approval expires and that refusal leads to limited-context continuation or an explanation.
-    requirements: [REQ-006]
-    decisions: [DEC-003, DEC-007]
-  - id: I-6
-    title: Create and revise models through conversation
-    summary: Implement the conversation flow for creating a new model from a description, asking clarifying questions, and iteratively revising new or imported geometry. Use the configured agent and model, check requested dimensions and applicable pins before applying a proposal, and report unsupported dimensional constraints. Verify creation and iterative revision with each required integration.
-    requirements: [REQ-003, REQ-006]
-    decisions: [DEC-001, DEC-002, DEC-005, DEC-007]
-  - id: I-7
-    title: Apply AI edits to selected faces with review of outside changes
-    summary: Let users select one or more faces and submit an instruction targeting them with any of the three agents. Review the proposed geometry before applying it to detect changes to unselected faces or their topology, including shared-vertex movement and changes needed to preserve connectivity. Highlight the affected region and require explicit confirmation before applying any such proposal. Verify that approval to access additional geometry grants no edit permission, that declining edit confirmation preserves the model, and that requested and pinned dimensions are checked even after confirmation.
+    title: Control geometry disclosure and review selection edits
+    summary: Start each selection edit with the selected faces and their boundary geometry, and require operation-specific approval before disclosing any additional parts. Compare the candidate locally with the original indexed mesh, including changes to incident unselected faces and topology. Show removed faces on the original and added faces on the candidate, require explicit confirmation for the displayed candidate when it affects unselected geometry or adds faces, and recheck requested dimensions and current pins at commit.
     requirements: [REQ-005, REQ-006]
-    decisions: [DEC-005, DEC-007, DEC-009]
-  - id: I-8
-    title: Validate geometry for 3D printing
-    summary: Define and document the v1 geometry checks for 3D printing. Let users run them on new and imported models after manual or AI edits. Show pass or fail, the issues detected, and the affected geometry. Mark results as outdated after relevant geometry changes and explain that a passing result applies to the documented checks.
+    decisions: [DEC-005, DEC-007, DEC-009, DEC-011]
+  - id: I-5
+    title: Provision all three agents from the installed macOS app
+    summary: Deliver an installable native macOS app with a Swift interface, in-app provisioning and authentication for Codex, Claude, and Antigravity, and agent and supported-model selection in Settings. Verify that subsequent requests use the selected configuration. On one clean Mac without Docker Desktop installed, install the app, launch it from Finder, connect all three agents through the UI without a separate Docker installation, and complete a live conversational modeling operation with each.
+    requirements: [REQ-001, REQ-006]
+    decisions: [DEC-003, DEC-007, DEC-013]
+  - id: I-6
+    title: Inspect geometry for 3D printing
+    summary: Validate the indexed triangle surface for degenerate and duplicate faces, invalid edge incidence, and inconsistent winding. Report affected faces and edges in the viewport, mark results stale when geometry changes, and state the limits of the checks in the UI. Verify the inspector on new and imported models after manual and conversational edits.
     requirements: [REQ-007]
-    decisions: [DEC-002]
+    decisions: [DEC-002, DEC-006]
+  - id: I-7
+    title: Save editable workspaces and protect unsaved changes
+    summary: Round-trip edited geometry, face identities, units, pins, and 3MF assembly mappings in editable saves, including compatibility with existing saves and continued editing without the original import. Prompt with Save, Discard Changes, and Cancel before replacing a dirty model or quitting. Verify that save failures, canceled dialogs, and failed or canceled replacement opens preserve the active workspace and edits.
+    requirements: [REQ-002, REQ-008]
+    decisions: [DEC-005, DEC-006, DEC-012, DEC-015, DEC-016]
+  - id: I-8
+    title: Export validated Core 3MF and verify it in PrusaSlicer
+    summary: Export the exact validated mesh as Core 3MF with millimeter coordinates and an explicit millimeter unit. Preserve imported assembly hierarchy and placement, including independent edits to repeated occurrences and export after reopening an editable save. Leave the destination unchanged when validation fails. Record PrusaSlicer version, scripted X/Y/Z comparisons for edited new and non-millimeter imported models, separate assembly placement checks where needed, and GUI confirmation that each acceptance export opens without rescaling.
+    requirements: [REQ-009]
+    decisions: [DEC-006, DEC-010, DEC-014, DEC-015, DEC-016]
 updated: 2026-11-25
 schema: 1
 ---
 
 # Implementation plan — 3D Model Studio
 
-## I-1: Build the native macOS workspace
+## I-1: Import and view editable models
 
-Build the native macOS application shell with a Swift UI, an active model workspace, and an entry point for settings. Verify that the application launches on macOS and opens the workspace.
-
-Requirements: REQ-001
-
-## I-2: Import and view editable STL, OBJ, and 3MF models
-
-Open STL, OBJ, and 3MF models in a viewport with rotation and zoom. Import each format as editable geometry in the active workspace. Use a fixture for each format to verify viewing and demonstrate one supported manual edit and one supported conversational edit.
+Support opening, orbiting, zooming, and editing STL, OBJ, Core 3MF, and multipart 3MF Production models in the native viewport. Prompt for STL and OBJ source units, honor 3MF units and transforms, and preserve stable face IDs, shared vertices, and assembly occurrence mappings in the editable mesh. Verify physical placement and supported manual and conversational edits with Bambu Studio and Orca Slicer fixtures. Reject missing, invalid, cyclic, or external model-part references while preserving the active workspace.
 
 Requirements: REQ-002
-Decisions: DEC-001, DEC-004
+Decisions: DEC-001, DEC-004, DEC-015, DEC-016
 
-## I-3: Enforce requested and pinned dimensions across edits
+## I-2: Enforce dimensions and pins in manual editing
 
-Define the supported dimensional measurements and numerical tolerance. Implement a shared check for explicit dimensions and units before applying geometry changes. Support pinning, changing, and unpinning dimensions on new and imported models. Verify that ordinary dimensions apply to one operation, that pinned dimensions apply to subsequent manual and AI edits, and that a violation identifies the conflicting dimension and leaves the geometry unchanged, including after confirmation of an edit outside the selection.
+Provide point movement, surface reshaping, planar patch extrusion, and numerical dimension controls in explicit units. Use a shared commit path to enforce operation-specific dimensions and persistent pins within the documented ±0.01 mm tolerance. Verify that users can add, change, and remove pins on new and imported models, and that a conflicting edit identifies the dimension and preserves geometry and pins.
 
-Requirements: REQ-003, REQ-004, REQ-005
-Decisions: DEC-002, DEC-005, DEC-009
+Requirements: REQ-003, REQ-004
+Decisions: DEC-002, DEC-005
 
-## I-4: Implement direct geometry editing and numerical controls
+## I-3: Create and revise models with locally verified dimensions
 
-Implement direct point movement, surface reshaping, and extrusion of selected geometry within the supported v1 modeling capabilities. Let users inspect and enter supported dimensions in explicit units. Route proposed edits through the shared dimensional checks and verify the workflow on new and imported models.
+Support clarified creation from an empty workspace and iterative revision of new and imported models through the configured agent. Give each agent the geometry permitted for creation or whole-model revision. Document supported dimension wording, extract targets locally, ask the user to restate ambiguous targets, and report unsupported constraints. Share the dimension checks with selection edits and verify that a proposal matching the agent’s interpretation still cannot apply while a user-specified dimension remains unresolved.
 
-Requirements: REQ-004
-Decisions: DEC-001, DEC-002, DEC-005
+Requirements: REQ-003, REQ-005, REQ-006
+Decisions: DEC-001, DEC-002, DEC-005, DEC-007, DEC-011
 
-## I-5: Integrate all three agents with model settings and geometry access controls
+## I-4: Control geometry disclosure and review selection edits
 
-Verify a supported integration method and the required modeling workflows for Codex, Claude, and Antigravity. Add settings for choosing an agent and a model it supports, and route subsequent requests through that choice. Enforce the same geometry access rules across all three integrations. Provide the description and in-progress geometry for creation, permit access to the active model for whole-model revision, and initially supply only selected faces and boundary geometry for selection edits. Identify and explain requests for additional geometry, share only the approved parts for the current operation, and verify that approval expires and that refusal leads to limited-context continuation or an explanation.
-
-Requirements: REQ-006
-Decisions: DEC-003, DEC-007
-
-## I-6: Create and revise models through conversation
-
-Implement the conversation flow for creating a new model from a description, asking clarifying questions, and iteratively revising new or imported geometry. Use the configured agent and model, check requested dimensions and applicable pins before applying a proposal, and report unsupported dimensional constraints. Verify creation and iterative revision with each required integration.
-
-Requirements: REQ-003, REQ-006
-Decisions: DEC-001, DEC-002, DEC-005, DEC-007
-
-## I-7: Apply AI edits to selected faces with review of outside changes
-
-Let users select one or more faces and submit an instruction targeting them with any of the three agents. Review the proposed geometry before applying it to detect changes to unselected faces or their topology, including shared-vertex movement and changes needed to preserve connectivity. Highlight the affected region and require explicit confirmation before applying any such proposal. Verify that approval to access additional geometry grants no edit permission, that declining edit confirmation preserves the model, and that requested and pinned dimensions are checked even after confirmation.
+Start each selection edit with the selected faces and their boundary geometry, and require operation-specific approval before disclosing any additional parts. Compare the candidate locally with the original indexed mesh, including changes to incident unselected faces and topology. Show removed faces on the original and added faces on the candidate, require explicit confirmation for the displayed candidate when it affects unselected geometry or adds faces, and recheck requested dimensions and current pins at commit.
 
 Requirements: REQ-005, REQ-006
-Decisions: DEC-005, DEC-007, DEC-009
+Decisions: DEC-005, DEC-007, DEC-009, DEC-011
 
-## I-8: Validate geometry for 3D printing
+## I-5: Provision all three agents from the installed macOS app
 
-Define and document the v1 geometry checks for 3D printing. Let users run them on new and imported models after manual or AI edits. Show pass or fail, the issues detected, and the affected geometry. Mark results as outdated after relevant geometry changes and explain that a passing result applies to the documented checks.
+Deliver an installable native macOS app with a Swift interface, in-app provisioning and authentication for Codex, Claude, and Antigravity, and agent and supported-model selection in Settings. Verify that subsequent requests use the selected configuration. On one clean Mac without Docker Desktop installed, install the app, launch it from Finder, connect all three agents through the UI without a separate Docker installation, and complete a live conversational modeling operation with each.
+
+Requirements: REQ-001, REQ-006
+Decisions: DEC-003, DEC-007, DEC-013
+
+## I-6: Inspect geometry for 3D printing
+
+Validate the indexed triangle surface for degenerate and duplicate faces, invalid edge incidence, and inconsistent winding. Report affected faces and edges in the viewport, mark results stale when geometry changes, and state the limits of the checks in the UI. Verify the inspector on new and imported models after manual and conversational edits.
 
 Requirements: REQ-007
-Decisions: DEC-002
+Decisions: DEC-002, DEC-006
+
+## I-7: Save editable workspaces and protect unsaved changes
+
+Round-trip edited geometry, face identities, units, pins, and 3MF assembly mappings in editable saves, including compatibility with existing saves and continued editing without the original import. Prompt with Save, Discard Changes, and Cancel before replacing a dirty model or quitting. Verify that save failures, canceled dialogs, and failed or canceled replacement opens preserve the active workspace and edits.
+
+Requirements: REQ-002, REQ-008
+Decisions: DEC-005, DEC-006, DEC-012, DEC-015, DEC-016
+
+## I-8: Export validated Core 3MF and verify it in PrusaSlicer
+
+Export the exact validated mesh as Core 3MF with millimeter coordinates and an explicit millimeter unit. Preserve imported assembly hierarchy and placement, including independent edits to repeated occurrences and export after reopening an editable save. Leave the destination unchanged when validation fails. Record PrusaSlicer version, scripted X/Y/Z comparisons for edited new and non-millimeter imported models, separate assembly placement checks where needed, and GUI confirmation that each acceptance export opens without rescaling.
+
+Requirements: REQ-009
+Decisions: DEC-006, DEC-010, DEC-014, DEC-015, DEC-016

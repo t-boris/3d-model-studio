@@ -35,14 +35,14 @@ The checks use the mesh’s shared vertex indices and apply in every model unit.
 - Each edge between distinct vertex indices must have exactly two incident faces. One face indicates an open boundary. Three or more indicate a non-manifold edge.
 - The two faces sharing an edge must traverse it in opposite directions.
 
-A pass covers these triangle and edge checks. Self-intersections, vertex-only contacts, inward-facing shells, wall thickness, supports, printer settings and material behavior remain outside their scope. Editable save is available now. Slicer export is blocked pending a format decision in DEC-006.
+A pass covers these triangle and edge checks. Self-intersections, vertex-only contacts, inward-facing shells, wall thickness, supports, printer settings and material behavior remain outside their scope. Editable save is available now. Slicer export to Core 3MF in millimeters is specified in DEC-010 and not yet implemented.
 
 ## v1 scope
 
 - Open STL, OBJ, and 3MF models as editable geometry and inspect them in a 3D viewport.
 - Create models from descriptions and refine new or imported models through manual edits or conversation, including instructions targeting selected faces.
 - Use precise dimensional controls with explicit units and optional persistent dimensions, and check geometry for 3D printing.
-- Save editable models for later work. Planned slicer export must preserve physical dimensions.
+- Save editable models for later work. Planned slicer export writes Core 3MF in millimeters and must preserve physical dimensions.
 - Use Codex, Claude, or Antigravity for conversational modeling. All three integrations are required in v1, with agent switching and model selection in Settings.
 
 Settings route modeling requests to Codex CLI, Claude Code, or Google's Antigravity SDK. Each runs in a disposable container with operation-scoped geometry. Offline tests cover clarification, creation and whole-model revision through all three routes. Authenticated service access and interactive app use still need verification. [Provider setup, model choices and evidence](Providers/README.md)

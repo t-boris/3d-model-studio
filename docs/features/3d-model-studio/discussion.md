@@ -115,3 +115,39 @@ Approved I-8 in progress. Implement REQ-007 on the local indexed triangle mesh a
 ### Agent · 2026-11-25
 
 Approved I-8 outcome: REQ-007 print validation is implemented and covered by interpreted checks in f7dbc19. All manual-edit, provider and dimension suites passed, including failing geometry, highlighted regions and stale-result handling. macOS 14 type-checking with warnings as errors and project plist validation passed. Build and interactive app verification were outside this step's controls. The export fallback was used. REQ-009 remains blocked because the pre-approval DEC-006 left the slicer format open. The combined completion condition remains unmet until a slicer opens exports from both origins at the expected dimensions.
+
+### AI updated the requirements · 2026-11-25
+
+DEC-010 written into REQ-009, the overview.
+
+### AI updated the requirements · 2026-11-25
+
+DEC-011, DEC-012, DEC-013 written into REQ-001, REQ-002, REQ-003, REQ-006, REQ-008, the overview.
+
+### Agent · 2026-11-25
+
+Export remains unimplemented because the run that delivered print validation was approved before DEC-010; every retry of that run ends in the same block. The owner approved a plan to reconcile the specification first. DEC-006, REQ-009 and the README now point to DEC-010 instead of an open format. REQ-002 documents the supported STL, OBJ and Core 3MF subset as implemented, and REQ-008 names the `.studio3d` editable format. Q-005 (export of geometry that fails print checks, blocking), Q-006 (exported file structure), Q-007 (PrusaSlicer measurement method) and Q-008 (3MF Production extension) record the remaining choices. Plan I-9 still describes the format as open and needs refreshing through MarkView. Export implementation and PrusaSlicer acceptance need a new run whose starting specification includes DEC-010 and the answers to these questions.
+
+### Answer to Q-005 · 2026-11-25
+
+What should slicer export do when the current mesh fails the REQ-007 print checks (degenerate or duplicate faces, open or non-manifold edges
+
+A. Block export until the print checks pass, and show the failing checks with the affected faces and edges.
+
+### Answer to Q-006 · 2026-11-25
+
+How should the exported Core 3MF file be structured?
+
+B. Preserve the source 3MF objects, components and build items when exporting a model imported from 3MF. This requires keeping that structure in the workspace model.
+
+### Answer to Q-007 · 2026-11-25
+
+How should the REQ-009 dimension checks in PrusaSlicer be performed and recorded?
+
+A. Read the dimensions from the PrusaSlicer command line (the --info output) in a repeatable script, and open each export once in the PrusaSlicer window to confirm it loads without a rescaling prompt. Record the PrusaSlicer version with the evidence.
+
+### Answer to Q-008 · 2026-11-25
+
+Should v1 open 3MF files that use the 3MF Production extension, such as multi-part project files saved by Bambu Studio or Orca Slicer?
+
+B. Support the Production extension in v1. Read every referenced model part, apply its transforms and flatten all parts into one editable mesh. Add fixtures from Bambu Studio and Orca Slicer to the acceptance checks.
