@@ -7,23 +7,44 @@ struct ModelingSheet: Identifiable {
 
 struct ModelingRequestView: View {
     let scope: ModelingScope
+    @ObservedObject var workspace: Workspace
     @Environment(\.dismiss) private var dismiss
     @StateObject private var session = ModelingSession()
     @State private var instruction = ""
 
+    private var currentScope: ModelingScope {
+        if !session.appliedTurns.isEmpty, let model = workspace.activeModel { return .revision(model) }
+        return scope
+    }
+
+    private func send() {
+        if session.question != nil {
+            session.clarify(instruction)
+        } else {
+            session.start(scope: currentScope, instruction: instruction)
+        }
+        instruction = ""
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(scope.title).font(.headline)
+            Text(currentScope.title).font(.headline)
             if let target = scope.target {
                 Text("Share \(target.count) selected faces and their boundary.")
-            } else if let model = scope.model {
+            } else if let model = currentScope.model {
                 Text("Share the current geometry of \(model.name).")
             } else {
                 Text("Describe the model you want to create.")
             }
-            TextField("Modeling instruction", text: $instruction, axis: .vertical)
+            if !session.submittedInstruction.isEmpty {
+                Text(session.submittedInstruction).foregroundStyle(.secondary).lineLimit(3).textSelection(.enabled)
+            }
+            if let question = session.question {
+                Text(question).textSelection(.enabled)
+            }
+            TextField(session.question != nil ? "Your answer" : "Modeling instruction", text: $instruction, axis: .vertical)
                 .lineLimit(2...5).textFieldStyle(.roundedBorder)
-                .disabled(session.busy || session.review != nil)
+                .disabled(session.busy || session.review != nil || session.proposal != nil)
             if let review = session.review {
                 Text("Share additional geometry?").font(.headline)
                 if let model = scope.model {
@@ -44,7 +65,26 @@ struct ModelingRequestView: View {
                     Button("Decline") { session.answer(review.id, allow: false) }
                     Button("Share Listed Faces") { session.answer(review.id, allow: true) }
                 }
-            } else if !session.message.isEmpty {
+            } else if let proposal = session.proposal {
+                ModelViewport(mesh: proposal.preview.mesh, selectedFaces: [], selectedPoint: nil) { _, _ in }
+                    .frame(height: 180).accessibilityLabel("Proposed model")
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(session.message)
+                        Text("Proposed dimensions").font(.headline)
+                        ForEach(ModelDimension.allCases, id: \.self) { dimension in
+                            let span = proposal.preview.extents[dimension.axis].formatted()
+                            Text("\(dimension.label) · \(span) \(proposal.preview.unit.symbol)")
+                        }
+                        Text("Requested dimensions").font(.headline)
+                        if proposal.requested.isEmpty { Text("None specified") }
+                        ForEach(proposal.requested.indices, id: \.self) { i in
+                            let t = proposal.requested[i]
+                            Text("\(t.dimension.label) · \(t.value.formatted()) \(t.unit.symbol)")
+                        }
+                    }.frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
+                }.frame(maxHeight: 160)
+            } else if !session.message.isEmpty && session.question == nil {
                 ScrollView {
                     Text(session.message).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
                     if let patch = session.patch {
@@ -57,9 +97,14 @@ struct ModelingRequestView: View {
                 Button("Close") { session.cancel(); dismiss() }.keyboardShortcut(.cancelAction)
                 Spacer()
                 if session.busy { ProgressView().controlSize(.small) }
-                Button("Send Request") { session.start(scope: scope, instruction: instruction) }
-                    .disabled(instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                              || session.busy || session.review != nil)
+                if session.proposal != nil {
+                    Button("Discard", action: session.discard)
+                    Button("Apply to Model") { session.apply(to: workspace) }.keyboardShortcut(.defaultAction)
+                } else {
+                    Button(session.question == nil ? "Send Request" : "Send Answer", action: send)
+                        .disabled(instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                  || session.busy || session.review != nil)
+                }
             }
         }
         .padding(20).frame(width: 460)

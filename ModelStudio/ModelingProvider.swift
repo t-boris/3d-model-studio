@@ -68,17 +68,31 @@ struct ProviderRoute {
         You are the background modeling agent in 3D Model Studio. Use the indexed surface below.
         Coordinates are XYZ triples in the supplied unit. targetFaceIDs is the authorized selection.
         readOnlyFaceIDs are context only. Return exactly one JSON object without Markdown.
-        For an edit return {"kind":"proposal","message":"description","patch":{"vertices":[],"faces":[],"removedFaceIDs":[]}}.
+        appliedTurns describes earlier accepted edits for context. Only the current instruction and its
+        clarifications set operation targets. Ask a focused question when the shape, dimension or unit is unclear:
+        {"kind":"question","message":"What height and unit should the block have?"}. Use the answers on this request.
+        For an edit return {"kind":"proposal","message":"description","patch":{"vertices":[],"faces":[],"removedFaceIDs":[],"requestedDimensions":[],"unsupportedConstraints":[]}}.
         List only new or changed items. Vertices have id and position; triangular faces have id and vertices.
         Preserve existing IDs; assign negative temporary IDs to new items. For creation propose the initial mesh.
         For a selection edit you may instead request specific additional faces by ID or faces across a supplied
         boundary edge: {"kind":"access","message":"specific reason","faceIDs":[],"acrossEdges":[[a,b]]}.
-        For a question or unsupported constraint return {"kind":"explanation","message":"question or explanation"}.
+        Every whole-model patch must include both constraint arrays, even when empty. In requestedDimensions,
+        list every requested or explicitly preserved whole-model span, e.g. {"dimension":"height","value":7,"unit":"millimeter"}.
+        dimension is width (X), depth (Y) or height (Z). unit is micron, millimeter, centimeter, meter, inch or foot.
+        Keep requested lengths in their explicit units. Convert coordinates to the input mesh unit.
+        If a dimensional constraint (e.g. a hole diameter, angle or wall thickness) cannot be checked as one of
+        those spans, return {"kind":"unsupported","message":"identify the constraint and explain why"}.
+        Never omit an unsupported constraint to propose a partial edit. For other failures use kind "explanation".
         """
         var payload = Data((header + "\n").utf8)
         payload.append(try JSONEncoder().encode(input))
         let reply = try await transport.run(route: self, input: payload)
-        return try ModelingReply(data: reply)
+        do { return try ModelingReply(data: reply) }
+        catch let DecodingError.dataCorrupted(context) where context.codingPath.contains(where: { $0.stringValue == "requestedDimensions" }) {
+            throw MeshImportError("Unsupported dimensional constraint or unit. Use whole-model width, depth or height in a supported length unit.")
+        } catch is DecodingError {
+            throw MeshImportError("\(provider.rawValue) returned an invalid modeling reply. Request a new proposal.")
+        }
     }
 }
 

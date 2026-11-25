@@ -48,6 +48,10 @@ struct EditableMesh: Equatable, Codable {
         faces[index].vertices = corners
     }
 
+    mutating func removeFaces(withIDs ids: Set<Int>) {
+        faces.removeAll { ids.contains($0.id) }
+    }
+
     func canAppendFaces(_ count: Int) -> Bool {
         count < Int.max - nextFaceID
     }

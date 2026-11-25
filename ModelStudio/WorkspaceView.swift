@@ -129,7 +129,7 @@ struct WorkspaceView: View {
             }
         }
         .sheet(item: $modelingSheet) { sheet in
-            ModelingRequestView(scope: sheet.scope)
+            ModelingRequestView(scope: sheet.scope, workspace: workspace)
         }
         .sheet(item: $workspace.pendingUnits) { loaded in
             UnitChoiceView(fileName: loaded.name, accept: workspace.acceptUnit) {

@@ -53,6 +53,13 @@ final class Workspace: ObservableObject {
         try activeModel?.commit(proposal, requested: requested)
     }
 
+    func commitCreation(_ proposal: EditableMesh, unit: MeshUnit, requested: [DimensionTarget]) throws {
+        guard activeModel == nil else {
+            throw MeshImportError("The workspace changed. Prepare the creation again in an empty workspace.")
+        }
+        activeModel = try WorkspaceModel(name: "Untitled Model", unit: unit, mesh: proposal, requested: requested)
+    }
+
     func applyManualEdit(_ edit: ManualMeshEdit, basedOn model: WorkspaceModel,
                          distance: Double, unit: MeshUnit) throws {
         let proposal = try edit.proposal(for: model, distance: distance, unit: unit)

@@ -60,7 +60,9 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
     let instruction = "Move the selected corner one inch"
 
     for scope in [ModelingScope.creation(draft: nil), .creation(draft: model), .revision(model)] {
-        await recorder.respond([proposal])
+        let create = #"{"kind":"proposal","message":"Create a triangle.","patch":{"vertices":[{"id":-1,"position":[0,2,0]},{"id":-2,"position":[0,0,0]},{"id":-3,"position":[1,0,0]}],"faces":[{"id":-1,"vertices":[-1,-2,-3]}],"removedFaceIDs":[],"requestedDimensions":[],"unsupportedConstraints":[]}}"#
+        let revise = #"{"kind":"proposal","message":"Move the corner.","patch":{"vertices":[{"id":2,"position":[0,2,0]}],"faces":[],"removedFaceIDs":[],"requestedDimensions":[],"unsupportedConstraints":[]}}"#
+        await recorder.respond([scope.model == nil ? create : revise])
         session.start(scope: scope, instruction: instruction, defaults: defaults)
         try await settle(session)
         precondition(session.patch?.vertices.first?.position == [0,2,0])

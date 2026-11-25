@@ -26,8 +26,19 @@ enum ModelingScope {
     }
 }
 
+struct ModelingClarification: Codable {
+    let question: String
+    let answer: String
+}
+
+struct AppliedModelingTurn: Codable {
+    let instruction: String
+    let clarifications: [ModelingClarification]
+    let result: String
+}
+
 // Only this value crosses the provider boundary. It cannot encode a workspace,
-// document name, pins, import path, unused vertices, or a previous conversation.
+// document name, pins, import path, unused vertices, or another sheet’s conversation.
 struct ModelingInput: Encodable {
     struct Vertex: Codable {
         let id: Int
@@ -41,6 +52,8 @@ struct ModelingInput: Encodable {
 
     let operation: String
     let instruction: String
+    let clarifications: [ModelingClarification]
+    let appliedTurns: [AppliedModelingTurn]
     let unit: MeshUnit
     let targetFaceIDs: [Int]?
     let readOnlyFaceIDs: [Int]
@@ -48,7 +61,8 @@ struct ModelingInput: Encodable {
     let vertices: [Vertex]
     let faces: [Face]
 
-    fileprivate init(scope: ModelingScope, instruction: String, approved: Set<Int>) throws {
+    fileprivate init(scope: ModelingScope, instruction: String, approved: Set<Int>,
+                     clarifications: [ModelingClarification], appliedTurns: [AppliedModelingTurn]) throws {
         let mesh = scope.model?.mesh ?? EditableMesh()
         let target = scope.target
         let visible: [MeshFace]
@@ -63,6 +77,8 @@ struct ModelingInput: Encodable {
         }
         operation = scope.title
         self.instruction = instruction
+        self.clarifications = clarifications
+        self.appliedTurns = appliedTurns
         unit = scope.model?.unit ?? .millimeter
         targetFaceIDs = target?.sorted()
         readOnlyFaceIDs = approved.sorted()
@@ -96,11 +112,14 @@ struct AgentMeshPatch: Codable {
     let vertices: [ModelingInput.Vertex]
     let faces: [ModelingInput.Face]
     let removedFaceIDs: [Int]
+    let requestedDimensions: [DimensionTarget]?
+    let unsupportedConstraints: [String]?
 }
 
 enum ModelingReply {
     case access(faceIDs: [Int], acrossEdges: [[Int]], reason: String)
     case proposal(String, AgentMeshPatch)
+    case question(String)
     case explanation(String)
 
     init(data: Data) throws {
@@ -119,6 +138,8 @@ enum ModelingReply {
         case "proposal":
             guard let patch = wire.patch else { throw MeshImportError("The proposal is missing its mesh changes.") }
             self = .proposal(message, patch)
+        case "question": self = .question(message)
+        case "unsupported": self = .explanation("Unsupported dimensional constraint. " + message)
         case "explanation": self = .explanation(message)
         default: throw MeshImportError("The provider returned an unsupported modeling reply.")
         }
@@ -126,20 +147,28 @@ enum ModelingReply {
 }
 
 final class ModelingOperation {
-    private let scope: ModelingScope
-    private let instruction: String
+    let scope: ModelingScope
+    let instruction: String
+    private let appliedTurns: [AppliedModelingTurn]
+    private(set) var clarifications: [ModelingClarification] = []
     private var approved: Set<Int> = []
     private(set) var review: GeometryAccessReview?
     private(set) var ended = false
 
-    init(scope: ModelingScope, instruction: String) {
+    init(scope: ModelingScope, instruction: String, appliedTurns: [AppliedModelingTurn] = []) {
+        self.appliedTurns = scope.target == nil ? appliedTurns : []
         self.scope = scope
         self.instruction = instruction
     }
 
+    func clarify(question: String, answer: String) {
+        clarifications.append(ModelingClarification(question: question, answer: answer))
+    }
+
     func input() throws -> ModelingInput {
         guard !ended, review == nil else { throw MeshImportError("This request is closed or awaiting approval.") }
-        return try ModelingInput(scope: scope, instruction: instruction, approved: approved)
+        return try ModelingInput(scope: scope, instruction: instruction, approved: approved,
+                                 clarifications: clarifications, appliedTurns: appliedTurns)
     }
 
     func request(faceIDs: [Int], acrossEdges: [[Int]], reason: String) throws {
