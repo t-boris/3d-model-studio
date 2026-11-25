@@ -71,3 +71,7 @@ I-2 implementation and fixture handoff are complete. The workspace Open command 
 ### Codex · 2026-11-25
 
 I-3 in progress. REQ-008 records the editable save and reopen obligation of DEC-006. V1 dimensional targets are whole-model X width, Y depth and Z height of the indexed surface in model coordinates. All requested and pinned targets use the same inclusive absolute tolerance of 0.01 mm, after unit conversion. Slicer export remains a separate obligation.
+
+### Codex · 2026-11-25
+
+I-3 implementation complete in faf6658, following specification commit db8881f. The workspace supports explicit pins, a shared geometry commit path and versioned editable save/open. Tests/run-dimension-checks.sh passed for a new block and all three import fixtures, including failed proposals and damaged saves. The app sources type-check for macOS 14. Building was disabled, so interactive file panels and UI gestures await a build-enabled pass. Subsequent manual tools, provider workflows, selection confirmation and slicer export remain in their respective steps.
