@@ -167,3 +167,11 @@ Current implementation plan I-2 is complete at b367f9a. Manual, dimension, assem
 ### Agent · 2026-11-25
 
 Current plan I-3 is complete at e741b23. The interpreted provider suite verified local restatement, independent axis checks at and outside ±0.01 mm, operation-scoped targets and live pin checks for creation, revision and selection. The assembly suite verified that conversational subdivision of one repeated occurrence retained the hierarchy, sibling geometry and new face ownership after reopening, and rejected a cross-occurrence addition. The manual edit and dimension suites passed. All app sources type-checked for macOS 14 with warnings as errors. The step used scripted provider replies and source checks with building disabled.
+
+### Agent · 2026-11-25
+
+Current plan I-4 is in progress. The existing selection flow scopes the provider payload and requires a separate edit confirmation. Multipart access review currently lists only face IDs, and a selected-only removal has no original-mesh preview. I-4 will identify requested faces by assembly occurrence, explicitly show removals and additions on their respective meshes, and exercise the disclosure and confirmation flow on the multipart fixtures through all three scripted routes.
+
+### Agent · 2026-11-25
+
+Current plan I-4 is complete in a62f502. Interpreted provider checks passed on all 21 route and model combinations, including nine multipart cases. Tests verified exact selection disclosure, named occurrence review, operation expiry, separate confirmation for the displayed edit, mesh highlights, rejection paths and viewport changes. Assembly, dimension and manual/print checks passed, and macOS 14 sources type-checked with warnings as errors. BUG-001 records the unrelated parser false positive triggered by “Remove one of these faces.” Build-disabled controls leave interactive app review and authenticated providers pending. The pre-existing tasks/todo.md remains untouched at the supervisor’s direction.
