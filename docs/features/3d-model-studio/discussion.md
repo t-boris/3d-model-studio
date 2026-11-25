@@ -67,3 +67,7 @@ I-2 is in progress. All three file readers will produce the same indexed mesh. T
 ### Codex · 2026-11-25
 
 I-2 implementation and fixture handoff are complete. The workspace Open command and toolbar use the same transactional import path. All three blocks passed source-level checks of unit handling, transformed coordinates, indexed connectivity, face identity, SceneKit geometry and a model-layer height edit. Invalid input and a canceled unit choice retained the active edited mesh. I-4 and I-6 can reuse the 7 mm height edit in Fixtures/Import/README.md. Interactive camera gestures and end-user editing remain pending. Building was disabled. The pre-existing overview.md lifecycle change is excluded from the I-2 commits at the supervisor’s direction.
+
+### Codex · 2026-11-25
+
+I-3 in progress. REQ-008 records the editable save and reopen obligation of DEC-006. V1 dimensional targets are whole-model X width, Y depth and Z height of the indexed surface in model coordinates. All requested and pinned targets use the same inclusive absolute tolerance of 0.01 mm, after unit conversion. Slicer export remains a separate obligation.
