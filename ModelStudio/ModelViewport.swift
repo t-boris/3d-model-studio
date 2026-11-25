@@ -45,15 +45,7 @@ struct ModelViewport: NSViewRepresentable {
     private func geometry() -> SCNGeometry {
         // Normalize the display copy before converting to GPU floats. Physical
         // coordinates, face order and vertex sharing stay in the editable mesh.
-        var low = mesh.vertices[mesh.faces[0].vertices.x]
-        var high = low
-        for face in mesh.faces {
-            for axis in 0..<3 {
-                let point = mesh.vertices[face.vertices[axis]]
-                low = simd_min(low, point)
-                high = simd_max(high, point)
-            }
-        }
+        let (low, high) = mesh.surfaceBounds
         let center = high * 0.5 + low * 0.5
         let radius = (high * 0.5 - low * 0.5).max()
         let scale = radius > 0 ? radius : 1

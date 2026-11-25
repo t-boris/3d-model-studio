@@ -8,6 +8,16 @@ On macOS 14 or later, open `ModelStudio.xcodeproj` in Xcode and run the shared `
 
 The [import fixtures](Fixtures/Import/README.md) include one block per format, expected geometry, and dimensions for the manual and conversational editing tasks.
 
+## Dimensions and editable files
+
+In an empty workspace, choose **New Block** to start with a 10 mm cube, or open a mesh. Width (X), depth (Y), and height (Z) measure the distance from the minimum to the maximum coordinate along each model axis. Only vertices used by faces contribute to those bounds. Rotating the view leaves the measurements unchanged. V1 dimensional targets cover these three whole-model spans.
+
+Enter a nonnegative length and select µm, mm, cm, m, in, or ft. **Set Once** scales that axis about its minimum coordinate. **Pin Current** preserves the measured span. **Change Pin** resizes the model and replaces that pin together. **Unpin** releases it for later edits. Resizing a flat axis cannot create thickness.
+
+Each proposed span must fall within **±0.01 mm**, inclusive, of its target after conversion to millimeters. The same absolute tolerance applies to the current operation’s targets and every active pin. A conflict reports the dimension, target, and proposed measurement and leaves the geometry and pins intact.
+
+Use **Save Editable Model…** (Command-S) to write a `.studio3d` file. Use **Open…** (Command-O) to resume editing. The file stores the indexed mesh and face identities, model unit, and explicit pins with their target values and units.
+
 ## v1 scope
 
 - Open STL, OBJ, and 3MF models as editable geometry and inspect them in a 3D viewport.
@@ -31,3 +41,4 @@ The confirmed brief, decisions and requirements are in [`docs/features/3d-model-
 - REQ-005 Selection-based AI editing
 - REQ-006 Agent and model configuration
 - REQ-007 3D-printing geometry validation
+- REQ-008 Save and reopen an editable model

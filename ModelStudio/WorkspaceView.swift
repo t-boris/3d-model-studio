@@ -5,7 +5,16 @@ private struct OpenMeshKey: FocusedValueKey {
     typealias Value = () -> Void
 }
 
+private struct SaveModelKey: FocusedValueKey {
+    typealias Value = () -> Void
+}
+
 extension FocusedValues {
+    var saveModel: (() -> Void)? {
+        get { self[SaveModelKey.self] }
+        set { self[SaveModelKey.self] = newValue }
+    }
+
     var openMesh: (() -> Void)? {
         get { self[OpenMeshKey.self] }
         set { self[OpenMeshKey.self] = newValue }
@@ -14,6 +23,7 @@ extension FocusedValues {
 
 struct WorkspaceCommands: Commands {
     @FocusedValue(\.openMesh) private var openMesh
+    @FocusedValue(\.saveModel) private var saveModel
 
     var body: some Commands {
         CommandGroup(after: .newItem) {
@@ -21,45 +31,28 @@ struct WorkspaceCommands: Commands {
                 .keyboardShortcut("o")
                 .disabled(openMesh == nil)
         }
-    }
-}
-
-@MainActor
-final class Workspace: ObservableObject {
-    @Published var activeModel: WorkspaceModel?
-    @Published var pendingUnits: MeshImport?
-    @Published var importError: String?
-    @Published private(set) var isReading = false
-
-    func open(_ url: URL) async {
-        guard !isReading, pendingUnits == nil else { return }
-        isReading = true
-        defer { isReading = false }
-        do {
-            let loaded = try await Task.detached(priority: .userInitiated) { try MeshImport.read(url) }.value
-            if let unit = loaded.unit {
-                activeModel = loaded.model(in: unit)
-            } else {
-                pendingUnits = loaded
-            }
-        } catch {
-            importError = "\(url.lastPathComponent)\n\(error.localizedDescription)"
+        CommandGroup(replacing: .saveItem) {
+            Button("Save Editable Model…") { saveModel?() }
+                .keyboardShortcut("s")
+                .disabled(saveModel == nil)
         }
-    }
-
-    func acceptUnit(_ unit: MeshUnit) {
-        guard let pendingUnits else { return }
-        activeModel = pendingUnits.model(in: unit)
-        self.pendingUnits = nil
     }
 }
 
 struct WorkspaceView: View {
     @StateObject private var workspace = Workspace()
     @State private var showingOpen = false
+    @State private var showingSave = false
+    @State private var savingFile: EditableModelFile?
 
     private var canOpen: Bool {
-        !showingOpen && !workspace.isReading && workspace.pendingUnits == nil
+        !showingOpen && !showingSave && !workspace.isReading && workspace.pendingUnits == nil
+    }
+
+    private func save() {
+        guard let model = workspace.activeModel else { return }
+        savingFile = EditableModelFile(model: model)
+        showingSave = true
     }
 
     var body: some View {
@@ -67,6 +60,11 @@ struct WorkspaceView: View {
             if let model = workspace.activeModel {
                 ModelViewport(mesh: model.mesh)
                     .id(model.id)
+                    .safeAreaInset(edge: .top, spacing: 0) {
+                        DimensionControls(workspace: workspace, model: model)
+                            .id(model.id)
+                            .disabled(!canOpen)
+                    }
                     .safeAreaInset(edge: .bottom, spacing: 0) {
                         HStack {
                             Text("\(model.mesh.vertices.count) vertices · \(model.mesh.faces.count) faces · \(model.unit.symbol)")
@@ -79,14 +77,20 @@ struct WorkspaceView: View {
                         .background(.bar)
                     }
             } else {
-                ContentUnavailableView("No Geometry", systemImage: "cube.transparent",
-                                       description: Text("Open an STL, OBJ, or 3MF model."))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ContentUnavailableView {
+                    Label("No Geometry", systemImage: "cube.transparent")
+                } description: {
+                    Text("Create a block or open an editable model, STL, OBJ, or 3MF.")
+                } actions: {
+                    Button("New Block", action: workspace.newBlock).disabled(!canOpen)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .accessibilityIdentifier("modelViewport")
         .navigationTitle(workspace.activeModel?.name ?? "Untitled")
         .focusedSceneValue(\.openMesh, canOpen ? { showingOpen = true } : nil)
+        .focusedSceneValue(\.saveModel, canOpen && workspace.activeModel != nil ? save : nil)
         .toolbar {
             ToolbarItem {
                 if workspace.isReading { ProgressView().controlSize(.small).accessibilityLabel("Reading mesh") }
@@ -95,17 +99,28 @@ struct WorkspaceView: View {
                 Button { showingOpen = true } label: { Label("Open…", systemImage: "folder") }
                     .disabled(!canOpen)
             }
+            ToolbarItem {
+                Button(action: save) { Label("Save Editable Model…", systemImage: "square.and.arrow.down") }
+                    .disabled(!canOpen || workspace.activeModel == nil)
+            }
             ToolbarItem(placement: .primaryAction) {
                 SettingsLink { Label("Settings", systemImage: "gearshape") }
             }
         }
-        .fileImporter(isPresented: $showingOpen, allowedContentTypes: ["stl", "obj", "3mf"].compactMap {
+        .fileImporter(isPresented: $showingOpen, allowedContentTypes: [.studioModel] + ["stl", "obj", "3mf"].compactMap {
             UTType(filenameExtension: $0)
         }) { result in
             switch result {
             case .success(let url): Task { await workspace.open(url) }
             case .failure(let error):
-                if (error as NSError).code != NSUserCancelledError { workspace.importError = error.localizedDescription }
+                if (error as NSError).code != NSUserCancelledError { workspace.modelError = error.localizedDescription }
+            }
+        }
+        .fileExporter(isPresented: $showingSave, document: savingFile, contentType: .studioModel,
+                      defaultFilename: savingFile.map { ($0.model.name as NSString).deletingPathExtension }) { result in
+            savingFile = nil
+            if case .failure(let error) = result, (error as NSError).code != NSUserCancelledError {
+                workspace.modelError = error.localizedDescription
             }
         }
         .sheet(item: $workspace.pendingUnits) { loaded in
@@ -113,13 +128,13 @@ struct WorkspaceView: View {
                 workspace.pendingUnits = nil
             }
         }
-        .alert("Couldn’t open model", isPresented: Binding(
-            get: { workspace.importError != nil },
-            set: { if !$0 { workspace.importError = nil } }
+        .alert("Model operation couldn’t be completed", isPresented: Binding(
+            get: { workspace.modelError != nil },
+            set: { if !$0 { workspace.modelError = nil } }
         )) {
-            Button("OK") { workspace.importError = nil }
+            Button("OK") { workspace.modelError = nil }
         } message: {
-            Text(workspace.importError ?? "")
+            Text(workspace.modelError ?? "")
         }
     }
 }

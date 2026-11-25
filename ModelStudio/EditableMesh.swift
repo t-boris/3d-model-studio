@@ -29,12 +29,12 @@ enum MeshUnit: String, CaseIterable, Codable {
 
 // Positions are expressed in the active model's unit. Incident triangles reference
 // the same vertex index. Face IDs survive vertex movement and face array reordering.
-struct MeshFace: Identifiable, Equatable {
+struct MeshFace: Identifiable, Equatable, Codable {
     let id: Int
     var vertices: SIMD3<Int>
 }
 
-struct EditableMesh: Equatable {
+struct EditableMesh: Equatable, Codable {
     var vertices: [SIMD3<Double>] = []
     private(set) var faces: [MeshFace] = []
     private var nextFaceID = 0
@@ -51,15 +51,34 @@ struct EditableMesh: Equatable {
         guard vertices.allSatisfy({ $0.x.isFinite && $0.y.isFinite && $0.z.isFinite }) else {
             throw MeshImportError("A vertex has a non-finite coordinate. Correct the coordinates and export again.")
         }
+        var ids = Set<Int>()
+        for face in faces {
+            let corners = face.vertices
+            guard vertices.indices.contains(corners.x), vertices.indices.contains(corners.y),
+                  vertices.indices.contains(corners.z) else {
+                throw MeshImportError("A face references a missing vertex.")
+            }
+            guard face.id >= 0, face.id < nextFaceID, nextFaceID < Int.max,
+                  ids.insert(face.id).inserted else {
+                throw MeshImportError("The mesh contains invalid face identifiers.")
+            }
+        }
         return self
     }
-}
 
-struct WorkspaceModel: Identifiable {
-    let id = UUID()
-    var name: String
-    var unit: MeshUnit
-    var mesh: EditableMesh
+    // Operate on the indexed surface. OBJ files can also contain unused vertices.
+    var surfaceBounds: (low: SIMD3<Double>, high: SIMD3<Double>) {
+        var low = SIMD3<Double>(repeating: .infinity)
+        var high = -low
+        for face in faces {
+            for corner in 0..<3 {
+                let point = vertices[face.vertices[corner]]
+                low = simd_min(low, point)
+                high = simd_max(high, point)
+            }
+        }
+        return (low, high)
+    }
 }
 
 struct MeshImportError: LocalizedError {
@@ -74,8 +93,8 @@ struct MeshImport: Identifiable {
     let mesh: EditableMesh
     let unit: MeshUnit?
 
-    func model(in unit: MeshUnit) -> WorkspaceModel {
-        WorkspaceModel(name: name, unit: self.unit ?? unit, mesh: mesh)
+    func model(in unit: MeshUnit) throws -> WorkspaceModel {
+        try WorkspaceModel(name: name, unit: self.unit ?? unit, mesh: mesh)
     }
 
     static func read(_ url: URL) throws -> Self {

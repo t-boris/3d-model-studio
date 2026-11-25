@@ -10,22 +10,30 @@
 		27F1A919E74EA13E5F417296 /* StudioSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE7C15A7743CB087F3DAA8C /* StudioSettingsView.swift */; };
 		3C9264AE99EC78244BD91D55 /* ModelStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00262AD6880714E663FD8184 /* ModelStudioApp.swift */; };
 		71063C2E38EE41F79264E2B9 /* EditableMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15A66DBABCEA43DB857C2169 /* EditableMesh.swift */; };
+		B3B4A6F4C72F4986B6CFE514 /* DimensionControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */; };
+		9C2C92DDB6DA469591E32747 /* EditableModelFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127BCA5384464AEBBB4A680C /* EditableModelFile.swift */; };
+		5CE88B6E061A49998FB79649 /* ModelDimensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D63943A75A104E1DA7E99EF6 /* ModelDimensions.swift */; };
 		DDD1CB1AE0F04E8EAA079772 /* ModelViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951A40625E5149BAAF055486 /* ModelViewport.swift */; };
 		5CF9D484212B4957BB97A74D /* OBJReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670467B3432546118C3EFCC6 /* OBJReader.swift */; };
 		E2B061EC96734365873BF9A1 /* STLReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C0B61510DF4D7A8204C097 /* STLReader.swift */; };
 		6476816AB2754FA38E18B5D3 /* ThreeMFReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C9E0221B4F46599175E9F0 /* ThreeMFReader.swift */; };
 		91D75DE06654D6C4CC31C32C /* WorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28506277DD10666B42F6DF9 /* WorkspaceView.swift */; };
+		7ACEC0D48C7A406C99BDB9A8 /* Workspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = E490A5F5047A4ACE8087B720 /* Workspace.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		00262AD6880714E663FD8184 /* ModelStudioApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStudioApp.swift; sourceTree = "<group>"; };
 		5AE7C15A7743CB087F3DAA8C /* StudioSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioSettingsView.swift; sourceTree = "<group>"; };
 		15A66DBABCEA43DB857C2169 /* EditableMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableMesh.swift; sourceTree = "<group>"; };
+		0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionControls.swift; sourceTree = "<group>"; };
+		127BCA5384464AEBBB4A680C /* EditableModelFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableModelFile.swift; sourceTree = "<group>"; };
+		D63943A75A104E1DA7E99EF6 /* ModelDimensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDimensions.swift; sourceTree = "<group>"; };
 		951A40625E5149BAAF055486 /* ModelViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelViewport.swift; sourceTree = "<group>"; };
 		670467B3432546118C3EFCC6 /* OBJReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBJReader.swift; sourceTree = "<group>"; };
 		31C0B61510DF4D7A8204C097 /* STLReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STLReader.swift; sourceTree = "<group>"; };
 		D7C9E0221B4F46599175E9F0 /* ThreeMFReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeMFReader.swift; sourceTree = "<group>"; };
 		A28506277DD10666B42F6DF9 /* WorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceView.swift; sourceTree = "<group>"; };
+		E490A5F5047A4ACE8087B720 /* Workspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Workspace.swift; sourceTree = "<group>"; };
 		E0D0F3972CF84FCACAB69A28 /* ModelStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ModelStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -36,11 +44,15 @@
 				00262AD6880714E663FD8184 /* ModelStudioApp.swift */,
 				5AE7C15A7743CB087F3DAA8C /* StudioSettingsView.swift */,
 				15A66DBABCEA43DB857C2169 /* EditableMesh.swift */,
+				0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */,
+				127BCA5384464AEBBB4A680C /* EditableModelFile.swift */,
+				D63943A75A104E1DA7E99EF6 /* ModelDimensions.swift */,
 				951A40625E5149BAAF055486 /* ModelViewport.swift */,
 				670467B3432546118C3EFCC6 /* OBJReader.swift */,
 				31C0B61510DF4D7A8204C097 /* STLReader.swift */,
 				D7C9E0221B4F46599175E9F0 /* ThreeMFReader.swift */,
 				A28506277DD10666B42F6DF9 /* WorkspaceView.swift */,
+				E490A5F5047A4ACE8087B720 /* Workspace.swift */,
 			);
 			path = ModelStudio;
 			sourceTree = "<group>";
@@ -117,11 +129,15 @@
 				3C9264AE99EC78244BD91D55 /* ModelStudioApp.swift in Sources */,
 				27F1A919E74EA13E5F417296 /* StudioSettingsView.swift in Sources */,
 				71063C2E38EE41F79264E2B9 /* EditableMesh.swift in Sources */,
+				B3B4A6F4C72F4986B6CFE514 /* DimensionControls.swift in Sources */,
+				9C2C92DDB6DA469591E32747 /* EditableModelFile.swift in Sources */,
+				5CE88B6E061A49998FB79649 /* ModelDimensions.swift in Sources */,
 				DDD1CB1AE0F04E8EAA079772 /* ModelViewport.swift in Sources */,
 				5CF9D484212B4957BB97A74D /* OBJReader.swift in Sources */,
 				E2B061EC96734365873BF9A1 /* STLReader.swift in Sources */,
 				6476816AB2754FA38E18B5D3 /* ThreeMFReader.swift in Sources */,
 				91D75DE06654D6C4CC31C32C /* WorkspaceView.swift in Sources */,
+				7ACEC0D48C7A406C99BDB9A8 /* Workspace.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -191,6 +207,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ModelStudio/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "3D Model Studio";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -211,6 +228,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ModelStudio/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "3D Model Studio";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design";
 				LD_RUNPATH_SEARCH_PATHS = (
