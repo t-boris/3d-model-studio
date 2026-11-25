@@ -126,7 +126,8 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
     precondition(approved.raw.contains("7.125") && !approved.raw.contains("918273"))
     precondition(session.review == nil && session.proposal != nil)
 
-    await recorder.respond([ask])
+    let reasonAfterDenial = "I can’t check the adjoining slope with the selected triangle alone."
+    await recorder.respond([ask, #"{"kind":"explanation","message":"\#(reasonAfterDenial)"}"#])
     session.start(scope: scope, instruction: instruction, defaults: defaults)
     try await settle(session)
     let fresh = await recorder.captured.last!
@@ -137,10 +138,15 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
     precondition(denied.id != review.id)
     let before = await recorder.captured.count
     session.answer(denied.id, allow: false)
-    precondition(session.review == nil && session.message.contains(denied.reason) && session.proposal == nil)
     session.answer(denied.id, allow: true)
+    try await settle(session)
     let after = await recorder.captured.count
-    precondition(after == before)
+    precondition(after == before + 1 && session.review == nil && session.message == reasonAfterDenial && session.proposal == nil)
+    let followUp = await recorder.captured.last!
+    var expectedFollowUp = fresh.json
+    expectedFollowUp["geometryAccessDenied"] = true
+    precondition(followUp.provider == provider && followUp.model == fresh.model)
+    precondition(NSDictionary(dictionary: expectedFollowUp).isEqual(to: followUp.json))
 
     await recorder.respond([ask])
     session.start(scope: scope, instruction: instruction, defaults: defaults)

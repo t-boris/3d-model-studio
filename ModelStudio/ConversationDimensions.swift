@@ -79,7 +79,7 @@ struct ConversationDimensions {
 
     private static let magnitude = #"([+-]?(?:(?:\d+\s+)?\d+/\d+|(?:\d+(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?))"#
     private static let number = #"(?<![\w./])"# + magnitude
-    private static let unit = #"(microns?|micromet(?:er|re)s?|[µμu]m|millimet(?:er|re)s?|mm|centimet(?:er|re)s?|cm|met(?:er|re)s?|m|inches|inch|in|feet|foot|ft)\b"#
+    private static let unit = #"(microns?|micromet(?:er|re)s?|[µμu]m|millimet(?:er|re)s?|mm|centimet(?:er|re)s?|cm|met(?:er|re)s?|m|inches|inch|in(?!\s+(?:a|an|the|this|that|these|those|my|your|our|its|their)\b)|feet|foot|ft)\b"#
     private static let axis = #"(width|wide|depth|deep|height|high|tall)\b"#
     private static let length = number + #"\s*"# + unit
     private static let afterAxis = expression(#"\b"# + axis + #"\s*(?:(?:of|to|is|at|=|:)\s*)?"# + length)
@@ -97,7 +97,11 @@ struct ConversationDimensions {
     private static let qualified = expression(#"\b(?:by|from|between|at least|at most|minimum|maximum|approximately|about|more than|less than|increase by|larger|smaller|extra|additional|another|double|triple|twice|half|times)\b|[<>±%]"#)
     private static let wordNumber = #"(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)"#
     private static let spelled = #"\b"# + wordNumber + #"(?:[ -]"# + wordNumber + #")*\b"#
-    private static let countOrID = expression(#"\b(?:faces?|vertices|vertex|edges?|corners?|parts?|objects?)\s+#?\d+\b(?![./]|\s*"# + unit + #")|(?:\b\d+|"# + spelled + #")\s+(?:faces?|vertices|edges?|corners?|holes?|parts?|objects?)\b|\b3d\b"#)
+    private static let meshItem = #"(?:faces?|triangles?|vertices|vertex|edges?|corners?|points?|parts?|objects?)"#
+    private static let countOrID = expression(
+        #"\b"# + meshItem + #"\s+#?\d+\b(?![./]|\s*"# + unit + #")"#
+        + #"|(?:\b\d+|"# + spelled + #")\s+(?:of\s+(?:(?:the|these|those|my|its)\s+)?)?(?:(?:selected|picked|top|bottom)\s+)?(?:"#
+        + meshItem + #"|holes?)\b|\b3(?:d|mf)\b"#)
     private static let quantity = expression("(?:" + magnitude + "|" + spelled + #"|[¼½¾⅛⅜⅝⅞])(?:\s*"# + unit + #")?"#)
     private static let allAxes = expression(#"\b(?:all|each|every|three)\s+(?:three\s+)?(?:dimensions?|axes|spans?)\b"#)
     private static let coordinate = expression(#"\b(?:at|coordinate)\s+[xyz]\s*=\s*"# + number)

@@ -73,15 +73,11 @@ final class ModelingSession: ObservableObject {
     }
 
     func answer(_ id: UUID, allow: Bool) {
-        guard let review, review.id == id else { return }
+        guard let operation, review?.id == id else { return }
         do {
-            try operation?.resolve(id, allow: allow)
-            self.review = nil
-            if allow {
-                dispatch()
-            } else {
-                finish("Access declined. The request ended because the agent needed the listed faces. \(review.reason)")
-            }
+            try operation.resolve(id, allow: allow)
+            review = nil
+            dispatch()
         } catch { finish(error.localizedDescription) }
     }
 

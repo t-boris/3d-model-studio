@@ -41,6 +41,17 @@ private func exerciseSelectedEdits(_ provider: ModelingProvider, source: String?
     }
 
     let viewport = ModelViewport.Coordinator()
+    if source == nil {
+        let ids: Set<Int> = [selected, neighbor]
+        let removal = "Remove one of these faces"
+        let reply = try wire(AgentMeshPatch(vertices: [], faces: [], removedFaceIDs: [selected],
+                                            requestedDimensions: [], unsupportedConstraints: []))
+        try await start(ids, removal, replies: [reply])
+        let input = await recorder.captured.last!
+        precondition(input.json["instruction"] as? String == removal && session.question == nil)
+        precondition(session.proposal?.impact?.removed == [selected] && workspace.activeModel!.mesh == original.mesh)
+        session.discard()
+    }
     viewport.update(mesh: original.mesh, selection: incident, point: nil)
     try await start(incident, "Lift the common corner", replies: [try moveCorner(1)])
     let inside = session.proposal!
@@ -195,19 +206,20 @@ private func exerciseAssemblySelection(_ provider: ModelingProvider, file: Strin
                                         .init(id: -3, vertices: [v.z,v.x,-1])], removedFaceIDs: [selected.id],
                                 requestedDimensions: [], unsupportedConstraints: []))
     }
-    func checkInput(sharing additional: [MeshFace]) async throws {
+    func checkInput(sharing additional: [MeshFace], denied: Bool = false) async throws {
         let input = await recorder.captured.last!
         let visible = ([selected] + additional).sorted { $0.id < $1.id }
         let ids = Set(visible.flatMap { [$0.vertices.x, $0.vertices.y, $0.vertices.z] })
         let vertices = ids.sorted().map { ModelingInput.Vertex(id: $0, position: mesh.vertices[$0]) }
         let boundary = [[v.x,v.y], [v.y,v.z], [v.z,v.x]].map { $0.sorted() }.sorted { $0.lexicographicallyPrecedes($1) }
-        let expected: [String: Any] = [
+        var expected: [String: Any] = [
             "operation": "Edit Selected Faces", "instruction": instruction, "unit": model.unit.rawValue,
             "clarifications": [], "appliedTurns": [], "targetFaceIDs": [selected.id],
             "readOnlyFaceIDs": additional.map(\.id).sorted(), "boundaryEdges": boundary,
             "faces": try JSONSerialization.jsonObject(with: JSONEncoder().encode(visible)),
             "vertices": try JSONSerialization.jsonObject(with: JSONEncoder().encode(vertices))
         ]
+        if denied { expected["geometryAccessDenied"] = true }
         precondition(input.provider == provider && NSDictionary(dictionary: expected).isEqual(to: input.json))
         precondition(!input.raw.contains(model.name) && !input.raw.contains("Locator block"))
     }
@@ -218,7 +230,7 @@ private func exerciseAssemblySelection(_ provider: ModelingProvider, file: Strin
         try await checkInput(sharing: [])
     }
 
-    try await start(replies: [request, more])
+    try await start(replies: [request, more, try subdivide(at: (a + b + c) / 3)])
     let review = session.review!
     precondition(review.reason == reason && review.faceIDs == [sibling.id, across[0].id])
     precondition(review.parts.map(\.faceIDs) == [[sibling.id], [across[0].id]])
@@ -236,9 +248,12 @@ private func exerciseAssemblySelection(_ provider: ModelingProvider, file: Strin
     let sentBeforeDecline = await recorder.captured.count
     session.answer(denied.id, allow: false)
     session.answer(denied.id, allow: true)
+    try await settle(session)
+    try await checkInput(sharing: [sibling, across[0]], denied: true)
     let sentAfterDecline = await recorder.captured.count
-    precondition(sentBeforeDecline == sentAfterDecline && session.message.contains(denied.reason))
-    precondition(session.proposal == nil && workspace.activeModel!.mesh == mesh)
+    precondition(sentBeforeDecline + 1 == sentAfterDecline && session.review == nil)
+    precondition(session.proposal?.requiresConfirmation == true && workspace.activeModel!.mesh == mesh)
+    session.discard()
 
     try await start(replies: [request, try subdivide(at: (a + b + c) / 3)])
     let fresh = session.review!

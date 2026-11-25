@@ -57,12 +57,14 @@ struct ModelingInput: Encodable {
     let unit: MeshUnit
     let targetFaceIDs: [Int]?
     let readOnlyFaceIDs: [Int]
+    let geometryAccessDenied: Bool?
     let boundaryEdges: [[Int]]
     let vertices: [Vertex]
     let faces: [Face]
 
     fileprivate init(scope: ModelingScope, instruction: String, approved: Set<Int>,
-                     clarifications: [ModelingClarification], appliedTurns: [AppliedModelingTurn]) throws {
+                     clarifications: [ModelingClarification], appliedTurns: [AppliedModelingTurn],
+                     geometryAccessDenied: Bool) throws {
         let mesh = scope.model?.mesh ?? EditableMesh()
         let target = scope.target
         let visible: [MeshFace]
@@ -82,6 +84,7 @@ struct ModelingInput: Encodable {
         unit = scope.model?.unit ?? .millimeter
         targetFaceIDs = target?.sorted()
         readOnlyFaceIDs = approved.sorted()
+        self.geometryAccessDenied = geometryAccessDenied ? true : nil
         faces = visible.map { Face(id: $0.id, vertices: $0.vertices) }
         var indices = Set<Int>()
         var incidence: [[Int]: Int] = [:]
@@ -173,6 +176,7 @@ final class ModelingOperation {
     private let appliedTurns: [AppliedModelingTurn]
     private(set) var clarifications: [ModelingClarification] = []
     private var approved: Set<Int> = []
+    private var geometryAccessDenied = false
     private(set) var review: GeometryAccessReview?
     private(set) var ended = false
 
@@ -191,10 +195,14 @@ final class ModelingOperation {
     func input() throws -> ModelingInput {
         guard !ended, review == nil else { throw MeshImportError("This request is closed or awaiting approval.") }
         return try ModelingInput(scope: scope, instruction: instruction, approved: approved,
-                                 clarifications: clarifications, appliedTurns: appliedTurns)
+                                 clarifications: clarifications, appliedTurns: appliedTurns,
+                                 geometryAccessDenied: geometryAccessDenied)
     }
 
     func request(faceIDs: [Int], acrossEdges: [[Int]], reason: String) throws {
+        guard !geometryAccessDenied else {
+            throw MeshImportError("The agent requested more geometry again after access was declined. No additional faces were shared.")
+        }
         let current = try input()
         guard let target = scope.target, let mesh = scope.model?.mesh,
               !reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -225,7 +233,7 @@ final class ModelingOperation {
             throw MeshImportError("This access request has expired.")
         }
         review = nil
-        if allow { approved.formUnion(pending.faceIDs) } else { end() }
+        if allow { approved.formUnion(pending.faceIDs) } else { geometryAccessDenied = true }
     }
 
     func end() {

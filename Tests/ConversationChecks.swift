@@ -229,13 +229,22 @@ private func literalChecks() throws {
     precondition(mixed == [target(.width, 2, .centimeter), target(.depth, 10), target(.height, 0.5, .inch)])
     let cube = try targets("Make a 1 1/2 inch cube.")
     precondition(cube == ModelDimension.allCases.map { target($0, 1.5, .inch) })
+    for text in ["Remove one of these faces", "Remove two of the selected faces", "Delete these two triangles",
+                 "Delete the top 2 triangles", "Split this face into three triangles", "Subdivide each selected face into 4 triangles",
+                 "Round the edges of this 3MF part", "Remove face 3", "Merge these 2 faces", "Move these 2 selected triangles"] {
+        let parsed = try targets(text)
+        precondition(parsed.isEmpty, text)
+    }
+    let inches = try targets("Set the height to 5 in.")
+    precondition(inches == [target(.height, 5, .inch)])
     do { _ = try targets("Set it to 7 cm"); fatalError("Unchecked length") }
     catch { precondition(error.localizedDescription.contains("Restate")) }
     do { _ = try targets("Make it 7 mm tall with a 3 mm bore."); fatalError("Unchecked second length") }
     catch { precondition(error.localizedDescription.contains("3 mm")) }
     for text in ["height 7", "make it one inch across", "double its height", "make it at least 7 mm tall",
                  "set width to 7 mm and width to 8 mm", "make the flange width 2 cm", "set height to 1/0 in",
-                 "move the selected corner one inch", "final span along Y is -3 mm"] {
+                 "move the selected corner one inch", "final span along Y is -3 mm", "Set the height to 5 in the new block",
+                 "Move these selected faces by 2 mm", "Move one of these faces by 2 mm"] {
         do { _ = try targets(text); fatalError("Expected restatement for " + text) }
         catch { precondition(error.localizedDescription.contains("Restate"), error.localizedDescription) }
     }

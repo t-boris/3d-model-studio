@@ -73,6 +73,8 @@ struct ProviderRoute {
         Preserve existing IDs; assign negative temporary IDs to new items. For creation propose the initial mesh.
         For a selection edit you may instead request specific additional faces by ID or faces across a supplied
         boundary edge: {"kind":"access","message":"specific reason","faceIDs":[],"acrossEdges":[[a,b]]}.
+        When geometryAccessDenied is true, the user declined additional geometry. Continue using only the
+        supplied geometry, or explain why you cannot proceed. Do not request more geometry in this operation.
         Every patch must include both constraint arrays, even when empty. In requestedDimensions,
         list every requested or explicitly preserved whole-model span, e.g. {"dimension":"height","value":7,"unit":"millimeter"}.
         dimension is width (X), depth (Y) or height (Z). unit is micron, millimeter, centimeter, meter, inch or foot.
