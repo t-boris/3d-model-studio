@@ -99,3 +99,7 @@ Managed I-6 (conversational creation and whole-model revision) is in progress. C
 ### Agent · 2026-11-25
 
 Managed I-6 implementation complete in 04a8e98. The interpreted provider harness passed all twelve route/origin combinations, including repeated revisions of each import, and verified local preview, SceneKit updates, current pins, requested lengths and rejection. Dimension and manual-edit suites passed. Application sources type-checked for macOS 14 with warnings as errors. No app build, interactive launch, authenticated provider run or deployment occurred. The reserved lifecycle and externally renumbered plan files remain under supervisor control. Selected-face application remains assigned separately.
+
+### Agent · 2026-11-25
+
+Managed I-7, selected-face edits, is in progress. Existing viewport picking and provider disclosure are in place. Remaining work covers the local comparison against the original full mesh, affected-region preview, proposal-specific edit confirmation and commit-time validation of requested and pinned dimensions. The edited implementation plan and overview remain reserved.
