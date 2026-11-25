@@ -87,7 +87,7 @@ struct WorkspaceView: View {
                                 .disabled(!canOpen)
                                 .accessibilityIdentifier("openPrintChecks")
                             Spacer()
-                            Text("Drag to rotate · Scroll to zoom")
+                            Text("Scroll to zoom")
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)

@@ -1,31 +1,112 @@
 import SceneKit
 import SwiftUI
 
-// Forward the full gesture to SceneKit for orbiting. Only a stationary click
-// picks geometry, so finishing an orbit never toggles a triangle.
+struct ViewportEdit {
+    var point: Int?
+    var normal: SIMD3<Double>?
+    let apply: (SIMD3<Double>) -> Void
+}
+
 final class PickingSceneView: SCNView {
+    struct Drag {
+        let anchor: SCNVector3
+        let modelUnitsPerSceneUnit: Double
+        let edit: ViewportEdit
+    }
+
     var onPick: ((CGPoint) -> Void)?
+    var onBeginEdit: ((CGPoint) -> Drag?)?
+    private var drag: Drag?
     private var down: CGPoint?
+    private var moved = false
+    private let dragMarker = SCNNode(geometry: SCNSphere(radius: 0.035))
+    private var orientationCube: OrientationCube?
+    private var orientationTimer: Timer?
+
+    private func mouseLocation(_ event: NSEvent) -> CGPoint { convert(event.locationInWindow, from: nil) }
 
     override func mouseDown(with event: NSEvent) {
-        down = event.locationInWindow
-        super.mouseDown(with: event)
+        let point = mouseLocation(event)
+        down = point
+        moved = false
+        drag = onBeginEdit?(point)
+        if drag == nil { super.mouseDown(with: event) }
     }
 
     override func mouseDragged(with event: NSEvent) {
-        if let down, hypot(event.locationInWindow.x - down.x, event.locationInWindow.y - down.y) > 3 {
-            self.down = nil
+        guard let down else { return }
+        let location = mouseLocation(event)
+        moved = moved || hypot(location.x - down.x, location.y - down.y) > 3
+        guard let drag else { super.mouseDragged(with: event); return }
+        if moved, let displacement = displacement(from: down, to: location, drag: drag) {
+            let p = displacement / drag.modelUnitsPerSceneUnit
+            if dragMarker.parent == nil {
+                let material = dragMarker.geometry?.firstMaterial
+                material?.diffuse.contents = NSColor.systemOrange
+                material?.lightingModel = .constant
+                material?.readsFromDepthBuffer = false
+                material?.writesToDepthBuffer = false
+                dragMarker.renderingOrder = 5
+                dragMarker.categoryBitMask = 2
+                scene?.rootNode.addChildNode(dragMarker)
+            }
+            dragMarker.simdPosition = SIMD3<Float>(drag.anchor) + SIMD3<Float>(Self.sceneVector(p))
+            dragMarker.isHidden = false
+        } else {
+            dragMarker.isHidden = true
         }
-        super.mouseDragged(with: event)
     }
 
     override func mouseUp(with event: NSEvent) {
-        super.mouseUp(with: event)
-        if down != nil { onPick?(convert(event.locationInWindow, from: nil)) }
+        let drag = self.drag
+        let start = down
+        let location = mouseLocation(event)
+        self.drag = nil
         down = nil
+        dragMarker.isHidden = true
+        if drag == nil { super.mouseUp(with: event) }
+        if let start, moved, let drag, let delta = displacement(from: start, to: location, drag: drag) {
+            drag.edit.apply(delta)
+        } else if start != nil && !moved {
+            onPick?(location)
+        }
+    }
+
+    private static func sceneVector(_ model: SIMD3<Double>) -> SIMD3<Double> {
+        SIMD3(model.x, model.z, -model.y)
+    }
+
+    func displacement(from start: CGPoint, to end: CGPoint, drag: Drag) -> SIMD3<Double>? {
+        let anchor = projectPoint(drag.anchor)
+        let from = SIMD3<Double>(unprojectPoint(SCNVector3(start.x, start.y, anchor.z)))
+        let to = SIMD3<Double>(unprojectPoint(SCNVector3(end.x, end.y, anchor.z)))
+        let delta = to - from
+        let result: SIMD3<Double>
+        if let normal = drag.edit.normal {
+            let along = projectPoint(SCNVector3(SIMD3<Float>(drag.anchor) + SIMD3<Float>(Self.sceneVector(normal)) * 0.1))
+            let screenDirection = SIMD2(Double(along.x - anchor.x), Double(along.y - anchor.y))
+            let pixels = SIMD2(Double(end.x - start.x), Double(end.y - start.y))
+            let projected = simd_length_squared(screenDirection)
+            let distance: Double
+            if projected > 9 {
+                distance = 0.1 * simd_dot(pixels, screenDirection) / projected
+            } else {
+                // In a straight-on view, pull upward to move along a normal hidden in depth.
+                let up = SIMD3<Double>(unprojectPoint(SCNVector3(start.x, end.y, anchor.z)))
+                distance = simd_length(up - from) * (end.y >= start.y ? 1 : -1)
+            }
+            guard distance > 0 else { return nil }
+            result = normal * distance
+        } else {
+            result = SIMD3(delta.x, -delta.z, delta.y)
+        }
+        let modelDelta = result * drag.modelUnitsPerSceneUnit
+        let length = simd_length(modelDelta)
+        return length.isFinite && length > 0 ? modelDelta : nil
     }
 
     override func scrollWheel(with event: NSEvent) {
+        guard drag == nil else { return }
         guard allowsCameraControl, let camera = pointOfView?.camera else {
             super.scrollWheel(with: event)
             return
@@ -34,6 +115,134 @@ final class PickingSceneView: SCNView {
         let sensitivity = event.hasPreciseScrollingDeltas ? 0.004 : 0.08
         let step = min(max(event.scrollingDeltaY * sensitivity, -0.35), 0.35)
         camera.fieldOfView = min(max(camera.fieldOfView * exp(-step), 12), 100)
+    }
+
+    fileprivate static let homeEye = SIMD3<Float>(2.3, 1.9, 3.2)
+
+    fileprivate func addOrientationControls() {
+        let cube = OrientationCube(frame: .zero)
+        cube.onFace = { [weak self] direction in
+            self?.orient(from: direction * simd_length(Self.homeEye))
+        }
+        orientationCube = cube
+        let home = NSButton(image: NSImage(systemSymbolName: "house", accessibilityDescription: "Home View")!,
+                            target: self, action: #selector(resetView))
+        home.toolTip = "Home View"
+        home.setAccessibilityIdentifier("homeView")
+        home.bezelStyle = .rounded
+        let controls = NSStackView(views: [home, cube])
+        controls.orientation = .vertical
+        controls.alignment = .trailing
+        controls.spacing = 5
+        controls.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(controls)
+        NSLayoutConstraint.activate([
+            controls.topAnchor.constraint(equalTo: topAnchor, constant: 12),
+            controls.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            cube.widthAnchor.constraint(equalToConstant: 84),
+            cube.heightAnchor.constraint(equalToConstant: 84)
+        ])
+    }
+
+    @objc private func resetView() {
+        pointOfView?.camera?.fieldOfView = 60
+        orient(from: Self.homeEye)
+    }
+
+    private func orient(from direction: SIMD3<Float>) {
+        guard let eye = pointOfView, drag == nil else { return }
+        let up = abs(direction.y) > abs(direction.x) + abs(direction.z) ? SIMD3<Float>(0, 0, -1) : SIMD3<Float>(0, 1, 0)
+        defaultCameraController.stopInertia()
+        eye.simdPosition = direction
+        eye.simdLook(at: .zero, up: up, localFront: SIMD3(0, 0, -1))
+        defaultCameraController.target = SCNVector3Zero
+        orientationCube?.sync(with: eye)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        orientationTimer?.invalidate()
+        orientationTimer = nil
+        guard window != nil, orientationCube != nil else { return }
+        let timer = Timer(timeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let eye = self.pointOfView else { return }
+                self.orientationCube?.sync(with: eye.presentation)
+            }
+        }
+        orientationTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    deinit { orientationTimer?.invalidate() }
+}
+
+private final class OrientationCube: SCNView {
+    var onFace: ((SIMD3<Float>) -> Void)?
+    private let eye = SCNNode()
+    private let box: SCNBox
+    private static let faces: [(label: String, direction: SIMD3<Float>)] = [
+        ("FRONT", [0, 0, 1]), ("RIGHT", [1, 0, 0]), ("BACK", [0, 0, -1]),
+        ("LEFT", [-1, 0, 0]), ("TOP", [0, 1, 0]), ("BOTTOM", [0, -1, 0])
+    ]
+
+    override init(frame: CGRect) {
+        box = SCNBox(width: 1, height: 1, length: 1, chamferRadius: 0)
+        super.init(frame: frame, options: nil)
+        box.materials = Self.faces.map { Self.material(label: $0.label) }
+        let scene = SCNScene()
+        scene.rootNode.addChildNode(SCNNode(geometry: box))
+        let camera = SCNCamera()
+        camera.usesOrthographicProjection = true
+        camera.orthographicScale = 1.05
+        eye.camera = camera
+        scene.rootNode.addChildNode(eye)
+        self.scene = scene
+        pointOfView = eye
+        backgroundColor = .clear
+        antialiasingMode = .multisampling4X
+        toolTip = "View Cube · Click a face to align the view"
+        setAccessibilityElement(true)
+        setAccessibilityRole(.image)
+        setAccessibilityLabel("View Cube")
+        setAccessibilityIdentifier("viewCube")
+    }
+
+    required init?(coder: NSCoder) { fatalError("Use init(frame:)") }
+
+    func sync(with source: SCNNode) {
+        let rotation = source.simdOrientation
+        guard eye.simdOrientation.vector != rotation.vector || eye.simdPosition == .zero else { return }
+        eye.simdOrientation = rotation
+        eye.simdPosition = rotation.act(SIMD3(0, 0, 4))
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        guard let hit = hitTest(location, options: nil).first, Self.faces.indices.contains(hit.geometryIndex) else { return }
+        onFace?(Self.faces[hit.geometryIndex].direction)
+    }
+
+    private static func material(label: String) -> SCNMaterial {
+        let image = NSImage(size: NSSize(width: 128, height: 128), flipped: false) { rect in
+            NSColor(srgbRed: 0.16, green: 0.23, blue: 0.29, alpha: 1).setFill()
+            rect.fill()
+            NSColor(srgbRed: 0.50, green: 0.66, blue: 0.69, alpha: 1).setStroke()
+            let border = NSBezierPath(rect: rect.insetBy(dx: 2, dy: 2))
+            border.lineWidth = 4
+            border.stroke()
+            let text = NSAttributedString(string: label, attributes: [
+                .font: NSFont.monospacedSystemFont(ofSize: 23, weight: .semibold),
+                .foregroundColor: NSColor.white
+            ])
+            let size = text.size()
+            text.draw(at: CGPoint(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2))
+            return true
+        }
+        let material = SCNMaterial()
+        material.lightingModel = .constant
+        material.diffuse.contents = image
+        return material
     }
 }
 
@@ -44,6 +253,8 @@ struct ModelViewport: NSViewRepresentable {
     var affectedSelection: Set<Int> = []
     var inspectionEdge: SIMD2<Int>?
     var inspectingIssue = false
+    var showsOrientation = false
+    var beginEdit: ((Int, Int) -> ViewportEdit?)?
     let pick: (Int, Int) -> Void
 
     final class Coordinator {
@@ -59,6 +270,7 @@ struct ModelViewport: NSViewRepresentable {
         private var showingIssueOutline = false
         var faceGroups: [[Int]] = []
         var positions: [SCNVector3] = []
+        private(set) var modelUnitsPerSceneUnit = 1.0
         var vertexSource: SCNGeometrySource?
         var normalSource: SCNGeometrySource?
 
@@ -82,8 +294,9 @@ struct ModelViewport: NSViewRepresentable {
                 let (low, high) = mesh.surfaceBounds
                 let center = high * 0.5 + low * 0.5
                 let radius = (high * 0.5 - low * 0.5).max()
+                modelUnitsPerSceneUnit = radius > 0 ? radius : 1
                 positions = mesh.vertices.map {
-                    let p = ($0 - center) / (radius > 0 ? radius : 1)
+                    let p = ($0 - center) / modelUnitsPerSceneUnit
                     return SCNVector3(p.x, p.z, -p.y)
                 }
                 var corners: [SCNVector3] = []
@@ -221,13 +434,14 @@ struct ModelViewport: NSViewRepresentable {
         camera.zNear = 0.01
         camera.zFar = 1000
         eye.camera = camera
-        eye.position = SCNVector3(2.3, 1.9, 3.2)
+        eye.simdPosition = PickingSceneView.homeEye
         eye.look(at: SCNVector3Zero)
         scene.rootNode.addChildNode(eye)
         view.pointOfView = eye
         view.allowsCameraControl = true
         view.defaultCameraController.interactionMode = .orbitTurntable
         view.defaultCameraController.target = SCNVector3Zero
+        if showsOrientation { view.addOrientationControls() }
         return view
     }
 
@@ -235,12 +449,24 @@ struct ModelViewport: NSViewRepresentable {
         let coordinator = context.coordinator
         coordinator.update(mesh: mesh, selection: selectedFaces, point: selectedPoint, affectedSelection: affectedSelection,
                            inspectionEdge: inspectionEdge, inspectingIssue: inspectingIssue)
-        view.onPick = { [weak view] location in
-            guard let hit = view?.hitTest(location, options: [.categoryBitMask: 1, .backFaceCulling: false]).first,
+        weak var weakView = view
+        func hit(at location: CGPoint) -> (face: Int, point: Int, anchor: SCNVector3)? {
+            guard let hit = weakView?.hitTest(location, options: [.categoryBitMask: 1, .backFaceCulling: false]).first,
                   hit.node === coordinator.surface,
                   let target = coordinator.selection(element: hit.geometryIndex, primitive: hit.faceIndex,
-                                                     near: hit.localCoordinates) else { return }
+                                                     near: hit.localCoordinates) else { return nil }
+            return (target.face, target.point, hit.worldCoordinates)
+        }
+        view.onPick = { location in
+            guard let target = hit(at: location) else { return }
             pick(target.face, target.point)
+        }
+        view.onBeginEdit = beginEdit.map { begin in
+            { location in
+                guard let target = hit(at: location), let edit = begin(target.face, target.point) else { return nil }
+                let anchor = edit.point.map { coordinator.positions[$0] } ?? target.anchor
+                return PickingSceneView.Drag(anchor: anchor, modelUnitsPerSceneUnit: coordinator.modelUnitsPerSceneUnit, edit: edit)
+            }
         }
     }
 }

@@ -62,7 +62,22 @@ private func exercise(_ source: String?) async throws {
         precondition(workspace.activeModel!.mesh == pinned.mesh && workspace.activeModel!.pins == pinned.pins)
     }
     precondition(workspace.printValidation.label == "Pass") // Pin-only changes and rejected edits.
+    expectFailure("Pinned Width (X)") {
+        try edit(.reshape(topIDs, direction: SIMD3(3, 0, 4)), 5)
+    }
+    precondition(workspace.activeModel!.mesh == pinned.mesh && workspace.activeModel!.pins == pinned.pins)
+    workspace.unpin(.width)
     workspace.unpin(.height)
+    try edit(.reshape(topIDs, direction: SIMD3(3, 0, 4)), 5)
+    let dragged = workspace.activeModel!
+    for index in dragged.mesh.vertices.indices {
+        let delta = (dragged.mesh.vertices[index] - initial.mesh.vertices[index]) * factor
+        precondition(simd_distance(delta, topPoints.contains(index) ? SIMD3(3, 0, 4) : .zero) < 1e-12)
+    }
+    try workspace.commit(initial.mesh, basedOn: dragged)
+    workspace.unpin(.depth)
+    workspace.pinCurrent(.width)
+    workspace.pinCurrent(.depth)
     try edit(.movePoint(point, axis: .height), 1000, .micron)
     guard case .stale = workspace.printValidation else { fatalError("Expected outdated manual result") }
     let moved = workspace.activeModel!

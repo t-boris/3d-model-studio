@@ -2,9 +2,28 @@ import Foundation
 import simd
 
 enum ManualMeshEdit {
-    case movePoint(Int, axis: ModelDimension)
-    case reshape(Set<Int>, axis: ModelDimension)
+    case movePoint(Int, direction: SIMD3<Double>)
+    case reshape(Set<Int>, direction: SIMD3<Double>)
     case extrude(Set<Int>)
+
+    static func movePoint(_ point: Int, axis: ModelDimension) -> Self {
+        .movePoint(point, direction: direction(along: axis))
+    }
+
+    static func reshape(_ selection: Set<Int>, axis: ModelDimension) -> Self {
+        .reshape(selection, direction: direction(along: axis))
+    }
+
+    private static func direction(along axis: ModelDimension) -> SIMD3<Double> {
+        var direction = SIMD3<Double>.zero
+        direction[axis.axis] = 1
+        return direction
+    }
+
+    static func extrusionNormal(for model: WorkspaceModel, selection: Set<Int>) throws -> SIMD3<Double> {
+        let faces = try model.mesh.selectedFaceIndices(selection)
+        return try PlanarPatch(mesh: model.mesh, faces: faces, unit: model.unit).normal
+    }
 
     func proposal(for model: WorkspaceModel, distance: Double, unit: MeshUnit) throws -> EditableMesh {
         let mm = distance * unit.millimetersPerUnit
@@ -28,22 +47,25 @@ enum ManualMeshEdit {
             return end
         }
 
-        func translate(_ indices: Set<Int>, along axis: ModelDimension) throws {
-            var direction = SIMD3<Double>.zero
-            direction[axis.axis] = 1
+        func translate(_ indices: Set<Int>, along vector: SIMD3<Double>) throws {
+            let direction = simd_normalize(vector)
+            guard direction.x.isFinite, direction.y.isFinite, direction.z.isFinite,
+                  simd_length_squared(direction) > 0 else {
+                throw MeshImportError("The movement direction could not be measured.")
+            }
             for i in indices { result.vertices[i] = try displaced(i, along: direction) }
         }
 
         switch self {
-        case let .movePoint(point, axis):
+        case let .movePoint(point, direction):
             guard mesh.vertices.indices.contains(point), mesh.faces.contains(where: {
                 $0.vertices.x == point || $0.vertices.y == point || $0.vertices.z == point
             }) else { throw MeshImportError("Select a point on the current surface.") }
-            try translate([point], along: axis)
+            try translate([point], along: direction)
 
-        case let .reshape(selection, axis):
+        case let .reshape(selection, direction):
             let faces = try mesh.selectedFaceIndices(selection)
-            try translate(mesh.cornerIndices(of: faces), along: axis)
+            try translate(mesh.cornerIndices(of: faces), along: direction)
 
         case let .extrude(selection):
             guard mm > 0 else { throw MeshImportError("Enter a positive extrusion distance.") }
