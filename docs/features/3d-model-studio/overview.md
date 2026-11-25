@@ -2,7 +2,7 @@
 type: feature
 id: 3d-model-studio
 title: 3D Model Studio
-status: exploring
+status: implementing
 owner: Boris Tsekinovsky
 created: 2026-11-25
 provenance: Created from the new-project intake
@@ -47,4 +47,4 @@ Users need a single workspace to inspect 3D files, create geometry from descript
 
 ## Scope
 
-Proposed v1, pending confirmation: a native macOS application with a Swift UI, basic 3D viewing, conversational model creation and revision, manual geometry editing, selection-based AI edits, and agent/model settings. Use a basic visual appearance. Out of v1: advanced rendering and material authoring. The intended modeling domain, the balance between creation and imported-model editing, import coverage, and supported agent integrations remain open. Codex, Claude, and Antigravity were suggested as candidate agents, not confirmed integrations.
+Proposed v1, pending confirmation: a native macOS application with a Swift UI, basic 3D viewing, conversational model creation and revision, manual geometry editing, selection-based AI edits, exact dimensions and geometry checks for 3D printing, and agent/model settings. In v1, users can save and reopen both newly created and imported models for continued editing, with the edited geometry, its units, and any explicitly pinned dimensions restored on reopening. Users can also export the current geometry of either kind of model in one slicer-compatible format while preserving its physical dimensions. The export format remains open. Use a basic visual appearance. Out of v1: advanced rendering and material authoring. Users must be able to open and view STL, OBJ, and 3MF models in v1. Both imported-model editing in all three formats and conversational model creation are required in v1, followed by manual and conversational refinement, with limited modeling capabilities in each. The intended modeling domain, the balance between creation and imported-model editing, and supported integration methods and modeling capabilities remain open. Codex, Claude, and Antigravity are required integrations in v1, with agent switching in settings; their supported integration methods and modeling capabilities still require technical verification.
