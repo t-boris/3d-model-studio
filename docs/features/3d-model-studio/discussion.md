@@ -203,3 +203,7 @@ I-7 is complete at da7cded. The workspace file suite passed for a historical v1 
 ### Agent · 2026-11-25
 
 I-8 is in progress. The saved assembly maps each edited face to a build item and component path. The workspace will use those mappings to write a single Core model part in millimeters and route export validation failures to the existing print inspector. Verification will cover destination preservation, source-independent reopen, repeated instances and the PrusaSlicer comparison.
+
+### Agent · 2026-11-25
+
+I-8 met its assigned completion condition. c09f5ea connects the workspace to validated Core 3MF export. 582c163 records the repeatable export and slicer checks, two acceptance files, raw measurements and GUI capture instructions. Tests verified exact serialized geometry, destination preservation, repair and placement for three assemblies directly and after reopening. PrusaSlicer 2.9.7 measured 24 × 12 × 8 mm and 20 × 10 × 7 mm. Swapping the files failed on all six axes. The workspace-file, assembly, manual/print, dimension and offline provider suites and macOS 14 warnings-as-errors source type-check passed. The supervisor reserved GUI openings for release verification. The pre-existing untracked tasks/todo.md remains untouched at supervisor direction.
