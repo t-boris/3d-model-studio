@@ -59,3 +59,7 @@ DEC-008 is reflected in the README (commit `e2f02e2`), with implementation evide
 ### Codex · 2026-11-25
 
 I-1 implementation is complete on the feature branch. The `ModelStudio.xcodeproj` application target and shared `ModelStudio` scheme identify `ModelStudio.app` (`com.github.t-boris.3d-model-studio`, macOS 14+). The SwiftUI entry point opens the active untitled workspace and its empty viewport and supplies the native Settings scene. The workspace toolbar links to Settings. Xcode resolved the target and scheme metadata, and the SwiftUI sources passed static type-checking for macOS 14. REQ-001's Swift UI criterion is checked. Its macOS runtime criterion and the launch verification in I-1 remain pending because the Cockpit step disables building. I-2 owns loading and viewing geometry, and I-5 retains provider feasibility, integration, and agent/model selection.
+
+### Codex · 2026-11-25
+
+I-2 is in progress. All three file readers will produce the same indexed mesh. The open workflow will apply declared units and transforms, request missing units, and replace the active workspace only on success. I-4 and I-6 retain the manual and conversational acceptance checks.

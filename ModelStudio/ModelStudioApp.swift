@@ -8,6 +8,7 @@ struct ModelStudioApp: App {
                 .frame(minWidth: 600, minHeight: 400)
         }
         .defaultSize(width: 960, height: 640)
+        .commands { WorkspaceCommands() }
 
         Settings {
             StudioSettingsView()
