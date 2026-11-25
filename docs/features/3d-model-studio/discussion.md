@@ -163,3 +163,7 @@ Current-plan I-1 import implementation and offline checks passed. Commit 1942bbc
 ### Codex · 2026-11-25
 
 Current implementation plan I-2 is complete at b367f9a. Manual, dimension, assembly and offline provider checks passed, along with macOS 14 source type-checking. On both producer saves and the repeated assembly, extrusion kept the original cap IDs, associated each wall with the selected occurrence, kept sibling geometry intact and preserved ownership through an editable archive round trip. Pin conflicts preserved the mesh and pins and reported the affected dimension. No app build or interactive app session was run.
+
+### Agent · 2026-11-25
+
+Current plan I-3 is complete at e741b23. The interpreted provider suite verified local restatement, independent axis checks at and outside ±0.01 mm, operation-scoped targets and live pin checks for creation, revision and selection. The assembly suite verified that conversational subdivision of one repeated occurrence retained the hierarchy, sibling geometry and new face ownership after reopening, and rejected a cross-occurrence addition. The manual edit and dimension suites passed. All app sources type-checked for macOS 14 with warnings as errors. The step used scripted provider replies and source checks with building disabled.
