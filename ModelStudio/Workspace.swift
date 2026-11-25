@@ -166,10 +166,20 @@ final class Workspace: ObservableObject {
     // against. Check the current pins even if only pin metadata has changed.
     func commit(_ proposal: EditableMesh, basedOn original: WorkspaceModel,
                 requested: [DimensionTarget] = []) throws {
-        guard canStartFileOperation, let current = activeModel, original.id == current.id, original.mesh == current.mesh else {
-            throw MeshImportError("The model changed. Prepare the edit again using the current geometry.")
+        try editModel(basedOn: original) { current in
+            try current.commit(proposal, requested: requested)
         }
-        try activeModel?.commit(proposal, requested: requested)
+    }
+
+    private func editModel(basedOn original: WorkspaceModel? = nil,
+                           _ edit: (inout WorkspaceModel) throws -> Void) throws {
+        let staleModel = MeshImportError("The model changed. Prepare the edit again using the current geometry.")
+        guard canStartFileOperation, var current = activeModel else { throw staleModel }
+        if let original, original.id != current.id || original.mesh != current.mesh {
+            throw staleModel
+        }
+        try edit(&current)
+        activeModel = current
     }
 
     func commitCreation(_ proposal: EditableMesh, unit: MeshUnit, requested: [DimensionTarget]) throws {
@@ -181,8 +191,10 @@ final class Workspace: ObservableObject {
 
     func applyManualEdit(_ edit: ManualMeshEdit, basedOn model: WorkspaceModel,
                          distance: Double, unit: MeshUnit) throws {
-        let proposal = try edit.proposal(for: model, distance: distance, unit: unit)
-        try commit(proposal, basedOn: model)
+        try editModel(basedOn: model) { current in
+            let proposal = try edit.proposal(for: current, distance: distance, unit: unit)
+            try current.commit(proposal)
+        }
     }
 
     func pinCurrent(_ dimension: ModelDimension) {
@@ -199,7 +211,9 @@ final class Workspace: ObservableObject {
     func resize(to target: DimensionTarget, changingPin: Bool) -> Bool {
         guard canStartFileOperation, activeModel != nil else { return false }
         do {
-            try activeModel?.resize(to: target, changingPin: changingPin)
+            try editModel { current in
+                try current.resize(to: target, changingPin: changingPin)
+            }
             return true
         } catch {
             modelError = error.localizedDescription

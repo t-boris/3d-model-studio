@@ -68,6 +68,19 @@ func checkReopen(source: String?, directory: URL) async throws {
     precondition(workspace.modelError == nil)
     workspace.pinCurrent(.width)
     workspace.pinCurrent(.depth)
+    let pinned = workspace.activeModel!
+    let heightMM = original.extents.z * original.unit.millimetersPerUnit
+    for (difference, accepted) in [(-0.0101, false), (-0.01, true), (0.01, true), (0.0101, false)] {
+        let requested = target(.height, heightMM + difference)
+        if accepted {
+            try workspace.commit(original.mesh, basedOn: original, requested: [requested])
+        } else {
+            rejected("Requested Height (Z)") {
+                try workspace.commit(original.mesh, basedOn: original, requested: [requested])
+            }
+        }
+        precondition(workspace.activeModel!.mesh == pinned.mesh && workspace.activeModel!.pins == pinned.pins)
+    }
     precondition(workspace.resize(to: target(.width, 1, .inch), changingPin: true))
     precondition(workspace.resize(to: target(.height, 7), changingPin: false))
     let edited = workspace.activeModel!
@@ -125,7 +138,7 @@ func checkReopen(source: String?, directory: URL) async throws {
         precondition(reopened.activeModel!.id == retained.id && reopened.activeModel!.mesh == retained.mesh)
         precondition(reopened.activeModel!.pins == retained.pins && reopened.activeModel!.unit == retained.unit)
     }
-    print("Round trip, continued editing and failed open passed for \(source ?? "new block").")
+    print("Inclusive span limits, round trip, continued editing and failed open passed for \(source ?? "new block").")
 }
 
 try checkTolerance()

@@ -56,7 +56,9 @@ private func exercise(_ source: String?) async throws {
     workspace.pinCurrent(.height)
     let pinned = workspace.activeModel!
     for operation: ManualMeshEdit in [.movePoint(point, axis: .height), .reshape(topIDs, axis: .height), .extrude(topIDs)] {
-        expectFailure("Pinned Height (Z)") { try edit(operation, 1) }
+        expectFailure("Pinned Height (Z)") {
+            try workspace.applyManualEdit(operation, basedOn: initial, distance: 1, unit: .millimeter)
+        }
         precondition(workspace.activeModel!.mesh == pinned.mesh && workspace.activeModel!.pins == pinned.pins)
     }
     precondition(workspace.printValidation.label == "Pass") // Pin-only changes and rejected edits.
@@ -127,7 +129,29 @@ private func exercise(_ source: String?) async throws {
         try workspace.applyManualEdit(.extrude(topIDs), basedOn: initial, distance: 1, unit: .millimeter)
     }
     precondition(workspace.activeModel!.mesh == before.mesh && workspace.activeModel!.pins == before.pins)
-    print("\(source ?? "New block"): point, surface, patch and triangle extrusion, viewport hit and update, topology, unit conversion and pin rejection passed.")
+
+    // At this world position all four requested offsets round to 0.625 mm.
+    // Measure the actual displacement for each operation before accepting it.
+    var offsetMesh = initial.mesh
+    for index in offsetMesh.vertices.indices { offsetMesh.vertices[index].z += 0x1p48 / factor }
+    try workspace.commit(offsetMesh, basedOn: before)
+    for operation: ManualMeshEdit in [.movePoint(point, axis: .height), .reshape(topIDs, axis: .height), .extrude(topIDs)] {
+        for (microns, accepted) in [(614.9, false), (615, true), (635, true), (635.1, false)] {
+            let snapshot = workspace.activeModel!
+            if accepted {
+                try edit(operation, microns, .micron)
+                let result = workspace.activeModel!
+                precondition((result.extents.z - snapshot.extents.z) * factor == 0.625)
+                precondition(result.pins == snapshot.pins)
+                try workspace.commit(offsetMesh, basedOn: result)
+            } else {
+                expectFailure("cannot be represented") { try edit(operation, microns, .micron) }
+                precondition(workspace.activeModel!.mesh == snapshot.mesh)
+                precondition(workspace.activeModel!.pins == snapshot.pins)
+            }
+        }
+    }
+    print("\(source ?? "New block"): all manual tools, viewport selection, shared topology, current pins, and inclusive displacement limits passed.")
 }
 
 for source: String? in [nil, "stl", "obj", "3mf"] { try await exercise(source) }
