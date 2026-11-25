@@ -44,6 +44,8 @@ Build a native macOS application with a Swift UI for viewing, creating, and edit
 
 DEC-013 supersedes the Docker Desktop setup described in the earlier Dependencies note. Settings provisions native runtimes for Codex, Claude and Antigravity and saves the provider key in Keychain after a successful connection check. The [provider guide](../../../Providers/README.md) describes setup and recovery. Release acceptance still requires installation and Finder launch on one clean Mac without Docker Desktop, live authentication in Settings, and one applied modeling operation with each provider.
 
+I-8 supersedes the historical Primary Workflow note about missing export and an open format choice in I-9. The File menu and toolbar export the current edited model as Core 3MF in millimeters under [REQ-009](requirements/REQ-009.md). The command validates the serialized mesh before writing. PrusaSlicer 2.9.7 reported 24 × 12 × 8 mm for the edited new block and 20 × 10 × 7 mm for the edited centimeter import. Separate package checks cover assembly placement. A PrusaSlicer GUI opening without a rescaling prompt or manual rescaling is pending for each file. [New block](../../../Fixtures/Export/created.3mf) · [Centimeter import](../../../Fixtures/Export/centimeter.3mf) · [CLI and placement evidence](../../../Fixtures/Export/README.md)
+
 ## Problem
 
 Users need a single workspace to inspect 3D files, create geometry from descriptions, and refine it through a combination of manual edits and conversational instructions.
