@@ -31,11 +31,15 @@ struct ModelViewport: NSViewRepresentable {
     let selectedFaces: Set<Int>
     let selectedPoint: Int?
     var affectedSelection: Set<Int> = []
+    var inspectionEdge: SIMD2<Int>?
+    var inspectingIssue = false
     let pick: (Int, Int) -> Void
 
     final class Coordinator {
         let surface = SCNNode()
         let wire = SCNNode()
+        let edgeOverlay = SCNNode()
+        var shownEdge: SIMD2<Int>?
         let marker = SCNNode(geometry: SCNSphere(radius: 0.028))
         var displayed: EditableMesh?
         var highlighted: Set<Int> = []
@@ -47,13 +51,16 @@ struct ModelViewport: NSViewRepresentable {
 
         init() {
             wire.categoryBitMask = 2
+            edgeOverlay.categoryBitMask = 2
+            edgeOverlay.renderingOrder = 2
             marker.categoryBitMask = 2
             wire.renderingOrder = 1
-            marker.renderingOrder = 2
+            marker.renderingOrder = 3
             marker.geometry?.firstMaterial?.diffuse.contents = NSColor.systemOrange
         }
 
-        func update(mesh: EditableMesh, selection: Set<Int>, point: Int?, affectedSelection: Set<Int> = []) {
+        func update(mesh: EditableMesh, selection: Set<Int>, point: Int?, affectedSelection: Set<Int> = [],
+                    inspectionEdge: SIMD2<Int>? = nil, inspectingIssue: Bool = false) {
             let changed = displayed != mesh
             if changed {
                 // Normalize the display copy. Source coordinates and face IDs remain in model space.
@@ -119,6 +126,22 @@ struct ModelViewport: NSViewRepresentable {
                 highlightedSelection = affectedSelection
             }
 
+            if changed || shownEdge != inspectionEdge {
+                shownEdge = inspectionEdge
+                edgeOverlay.geometry = nil
+                if let edge = inspectionEdge {
+                    let line = SCNGeometryElement(indices: [Int32(0), 1], primitiveType: .line)
+                    let geometry = SCNGeometry(sources: [SCNGeometrySource(vertices: [positions[edge.x], positions[edge.y]])],
+                                               elements: [line])
+                    let material = SCNMaterial()
+                    material.lightingModel = .constant
+                    material.diffuse.contents = NSColor.systemPink
+                    material.readsFromDepthBuffer = false
+                    geometry.materials = [material]
+                    edgeOverlay.geometry = geometry
+                }
+            }
+            marker.geometry?.firstMaterial?.readsFromDepthBuffer = !inspectingIssue
             marker.isHidden = true
             if let point, positions.indices.contains(point) {
                 marker.position = positions[point]
@@ -146,7 +169,7 @@ struct ModelViewport: NSViewRepresentable {
         let view = PickingSceneView()
         let scene = SCNScene()
         let coordinator = context.coordinator
-        for node in [coordinator.surface, coordinator.wire, coordinator.marker] {
+        for node in [coordinator.surface, coordinator.wire, coordinator.edgeOverlay, coordinator.marker] {
             scene.rootNode.addChildNode(node)
         }
         view.scene = scene
@@ -171,7 +194,8 @@ struct ModelViewport: NSViewRepresentable {
 
     func updateNSView(_ view: PickingSceneView, context: Context) {
         let coordinator = context.coordinator
-        coordinator.update(mesh: mesh, selection: selectedFaces, point: selectedPoint, affectedSelection: affectedSelection)
+        coordinator.update(mesh: mesh, selection: selectedFaces, point: selectedPoint, affectedSelection: affectedSelection,
+                           inspectionEdge: inspectionEdge, inspectingIssue: inspectingIssue)
         view.onPick = { [weak view] location in
             guard let hit = view?.hitTest(location, options: [.categoryBitMask: 1, .backFaceCulling: false]).first,
                   hit.node === coordinator.surface,

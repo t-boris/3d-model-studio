@@ -16,6 +16,8 @@
 		3F9AE8DD695C4BB9A463278C /* ModelingProposal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4737E21E3A427A848AD5A5 /* ModelingProposal.swift */; };
 		3C9264AE99EC78244BD91D55 /* ModelStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00262AD6880714E663FD8184 /* ModelStudioApp.swift */; };
 		71063C2E38EE41F79264E2B9 /* EditableMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15A66DBABCEA43DB857C2169 /* EditableMesh.swift */; };
+		99CCFEDFDEA74300B3FCEA5A /* PrintChecksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E1D7C5297974B909BCB0F34 /* PrintChecksView.swift */; };
+		74B63E4ECC6A4D01A34499E1 /* PrintGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 374F900ED84D496AA9283B87 /* PrintGeometry.swift */; };
 		B3B4A6F4C72F4986B6CFE514 /* DimensionControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */; };
 		9C2C92DDB6DA469591E32747 /* EditableModelFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127BCA5384464AEBBB4A680C /* EditableModelFile.swift */; };
 		5CE88B6E061A49998FB79649 /* ModelDimensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D63943A75A104E1DA7E99EF6 /* ModelDimensions.swift */; };
@@ -39,6 +41,8 @@
 		A4134E3D5967449E87C45A1B /* ConversationDimensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationDimensions.swift; sourceTree = "<group>"; };
 		2F4737E21E3A427A848AD5A5 /* ModelingProposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingProposal.swift; sourceTree = "<group>"; };
 		15A66DBABCEA43DB857C2169 /* EditableMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableMesh.swift; sourceTree = "<group>"; };
+		2E1D7C5297974B909BCB0F34 /* PrintChecksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintChecksView.swift; sourceTree = "<group>"; };
+		374F900ED84D496AA9283B87 /* PrintGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintGeometry.swift; sourceTree = "<group>"; };
 		0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionControls.swift; sourceTree = "<group>"; };
 		127BCA5384464AEBBB4A680C /* EditableModelFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableModelFile.swift; sourceTree = "<group>"; };
 		D63943A75A104E1DA7E99EF6 /* ModelDimensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDimensions.swift; sourceTree = "<group>"; };
@@ -66,6 +70,8 @@
 				A4134E3D5967449E87C45A1B /* ConversationDimensions.swift */,
 				2F4737E21E3A427A848AD5A5 /* ModelingProposal.swift */,
 				15A66DBABCEA43DB857C2169 /* EditableMesh.swift */,
+				2E1D7C5297974B909BCB0F34 /* PrintChecksView.swift */,
+				374F900ED84D496AA9283B87 /* PrintGeometry.swift */,
 				0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */,
 				127BCA5384464AEBBB4A680C /* EditableModelFile.swift */,
 				D63943A75A104E1DA7E99EF6 /* ModelDimensions.swift */,
@@ -159,6 +165,8 @@
 				358CB03C16D145EBA6B17FC6 /* ConversationDimensions.swift in Sources */,
 				3F9AE8DD695C4BB9A463278C /* ModelingProposal.swift in Sources */,
 				71063C2E38EE41F79264E2B9 /* EditableMesh.swift in Sources */,
+				99CCFEDFDEA74300B3FCEA5A /* PrintChecksView.swift in Sources */,
+				74B63E4ECC6A4D01A34499E1 /* PrintGeometry.swift in Sources */,
 				B3B4A6F4C72F4986B6CFE514 /* DimensionControls.swift in Sources */,
 				9C2C92DDB6DA469591E32747 /* EditableModelFile.swift in Sources */,
 				5CE88B6E061A49998FB79649 /* ModelDimensions.swift in Sources */,

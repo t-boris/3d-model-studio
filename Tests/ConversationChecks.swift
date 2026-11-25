@@ -66,6 +66,8 @@ private func exerciseConversation(_ provider: ModelingProvider, source: String?)
         session.apply(to: workspace)
         precondition(session.appliedTurns.count == 1 && workspace.activeModel!.pins.isEmpty)
     }
+    await workspace.validatePrintGeometry()
+    precondition(workspace.printValidation.label == "Pass")
     let original = workspace.activeModel!
     let factor = original.unit.millimetersPerUnit
     let viewport = ModelViewport.Coordinator()
@@ -85,6 +87,9 @@ private func exerciseConversation(_ provider: ModelingProvider, source: String?)
     if source == nil { precondition(call.model == provider.models.first!) }
     precondition(session.proposal != nil && workspace.activeModel!.mesh == original.mesh, session.message)
     session.apply(to: workspace)
+    guard case .stale = workspace.printValidation else { fatalError("Applied provider edit kept old result") }
+    await workspace.validatePrintGeometry()
+    precondition(workspace.printValidation.label == "Pass")
     let revised = workspace.activeModel!
     precondition(revised.id == original.id && revised.mesh.faces == original.mesh.faces)
     precondition(simd_length(revised.extents * factor - [20, 10, 7]) < 1e-10 && revised.mesh.surfaceBounds.low.z == 0)

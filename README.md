@@ -24,12 +24,25 @@ Choose **Create from Description…** in an empty workspace, or **Ask Agent → 
 
 Review the proposed surface, measured spans and requested dimensions. **Apply to Model** updates the workspace and lets you continue the conversation on the edited geometry. **Discard** keeps the previous model. A conflicting pin or unsupported measurement appears in the sheet. Closing the sheet ends its conversation.
 
+## Print geometry checks
+
+Choose **Print Checks** below the viewport, then **Run Checks**. A failed result lists problems by face or edge. Select a problem to see its face IDs and suggested correction. The inspection viewport highlights the faces in orange, marks a corner, and draws the affected edge in pink when applicable. After a geometry edit, the workspace shows **Outdated · Run again** until you recheck. Pinning a dimension or rotating the view keeps the result current.
+
+The checks use the mesh’s shared vertex indices and apply in every model unit.
+
+- Each triangle must have twice its area greater than 10⁻¹² times the square of its longest edge. This flags collapsed triangles and extremely thin slivers.
+- Each set of three vertex indices may occur in only one face, in either winding.
+- Each edge between distinct vertex indices must have exactly two incident faces. One face indicates an open boundary. Three or more indicate a non-manifold edge.
+- The two faces sharing an edge must traverse it in opposite directions.
+
+A pass covers these triangle and edge checks. Self-intersections, vertex-only contacts, inward-facing shells, wall thickness, supports, printer settings and material behavior remain outside their scope. Editable save is available now. Slicer export is blocked pending a format decision in DEC-006.
+
 ## v1 scope
 
 - Open STL, OBJ, and 3MF models as editable geometry and inspect them in a 3D viewport.
 - Create models from descriptions and refine new or imported models through manual edits or conversation, including instructions targeting selected faces.
 - Use precise dimensional controls with explicit units and optional persistent dimensions, and check geometry for 3D printing.
-- Save editable models for later work and export geometry for slicing while preserving physical dimensions.
+- Save editable models for later work. Planned slicer export must preserve physical dimensions.
 - Use Codex, Claude, or Antigravity for conversational modeling. All three integrations are required in v1, with agent switching and model selection in Settings.
 
 Settings route modeling requests to Codex CLI, Claude Code, or Google's Antigravity SDK. Each runs in a disposable container with operation-scoped geometry. Offline tests cover clarification, creation and whole-model revision through all three routes. Authenticated service access and interactive app use still need verification. [Provider setup, model choices and evidence](Providers/README.md)
@@ -48,3 +61,4 @@ The confirmed brief, decisions and requirements are in [`docs/features/3d-model-
 - REQ-006 Agent and model configuration
 - REQ-007 3D-printing geometry validation
 - REQ-008 Save and reopen an editable model
+- REQ-009 Export edited geometry for a slicer

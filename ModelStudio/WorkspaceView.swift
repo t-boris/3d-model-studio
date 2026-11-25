@@ -43,11 +43,12 @@ struct WorkspaceView: View {
     @StateObject private var workspace = Workspace()
     @State private var showingOpen = false
     @State private var modelingSheet: ModelingSheet?
+    @State private var showingPrintChecks = false
     @State private var showingSave = false
     @State private var savingFile: EditableModelFile?
 
     private var canOpen: Bool {
-        modelingSheet == nil && !showingOpen && !showingSave && !workspace.isReading && workspace.pendingUnits == nil
+        modelingSheet == nil && !showingPrintChecks && !showingOpen && !showingSave && !workspace.isReading && workspace.pendingUnits == nil
     }
 
     private func save() {
@@ -71,6 +72,9 @@ struct WorkspaceView: View {
                     .safeAreaInset(edge: .bottom, spacing: 0) {
                         HStack {
                             Text("\(model.mesh.vertices.count) vertices · \(model.mesh.faces.count) faces · \(model.unit.symbol)")
+                            Button("Print Checks · \(workspace.printValidation.label)") { showingPrintChecks = true }
+                                .disabled(!canOpen)
+                                .accessibilityIdentifier("openPrintChecks")
                             Spacer()
                             Text("Drag to rotate · Scroll to zoom")
                         }
@@ -127,6 +131,9 @@ struct WorkspaceView: View {
             if case .failure(let error) = result, (error as NSError).code != NSUserCancelledError {
                 workspace.modelError = error.localizedDescription
             }
+        }
+        .sheet(isPresented: $showingPrintChecks) {
+            PrintChecksView(workspace: workspace)
         }
         .sheet(item: $modelingSheet) { sheet in
             ModelingRequestView(scope: sheet.scope, workspace: workspace)

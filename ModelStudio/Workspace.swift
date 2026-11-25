@@ -3,10 +3,35 @@ import Foundation
 
 @MainActor
 final class Workspace: ObservableObject {
-    @Published private(set) var activeModel: WorkspaceModel?
+    @Published private(set) var activeModel: WorkspaceModel? {
+        didSet {
+            if oldValue?.id != activeModel?.id {
+                printValidation = .unchecked
+                return
+            }
+            switch printValidation {
+            case .current, .checking:
+                if oldValue?.mesh != activeModel?.mesh { printValidation = .stale }
+            case .unchecked, .stale:
+                break
+            }
+        }
+    }
+    @Published private(set) var printValidation: PrintValidationState = .unchecked
     @Published var pendingUnits: MeshImport?
     @Published var modelError: String?
     @Published private(set) var isReading = false
+
+    func validatePrintGeometry() async {
+        guard let mesh = activeModel?.mesh else { return }
+        if case .checking = printValidation { return }
+        let token = UUID()
+        printValidation = .checking(token)
+        let report = await Task.detached(priority: .userInitiated) { PrintGeometryReport(mesh: mesh) }.value
+        // A later edit, replacement or recheck can supersede this result.
+        guard case .checking(let current) = printValidation, current == token else { return }
+        printValidation = .current(report)
+    }
 
     func open(_ url: URL) async {
         guard !isReading, pendingUnits == nil else { return }

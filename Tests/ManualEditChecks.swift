@@ -49,6 +49,8 @@ private func exercise(_ source: String?) async throws {
         try workspace.applyManualEdit(edit, basedOn: workspace.activeModel!, distance: value, unit: unit)
     }
 
+    await workspace.validatePrintGeometry()
+    precondition(workspace.printValidation.label == "Pass")
     workspace.pinCurrent(.width)
     workspace.pinCurrent(.depth)
     workspace.pinCurrent(.height)
@@ -57,8 +59,10 @@ private func exercise(_ source: String?) async throws {
         expectFailure("Pinned Height (Z)") { try edit(operation, 1) }
         precondition(workspace.activeModel!.mesh == pinned.mesh && workspace.activeModel!.pins == pinned.pins)
     }
+    precondition(workspace.printValidation.label == "Pass") // Pin-only changes and rejected edits.
     workspace.unpin(.height)
     try edit(.movePoint(point, axis: .height), 1000, .micron)
+    guard case .stale = workspace.printValidation else { fatalError("Expected outdated manual result") }
     let moved = workspace.activeModel!
     precondition(moved.mesh.faces == initial.mesh.faces)
     precondition(moved.mesh.vertices.indices.filter { moved.mesh.vertices[$0] != initial.mesh.vertices[$0] } == [point])
@@ -105,6 +109,8 @@ private func exercise(_ source: String?) async throws {
     precondition(abs(extruded.extents.z * factor - 9) < 1e-12)
     precondition(extruded.pins.map(\.dimension) == [.width, .depth])
     checkClosedMesh(extruded.mesh)
+    await workspace.validatePrintGeometry()
+    precondition(workspace.printValidation.label == "Pass")
     view.update(mesh: extruded.mesh, selection: topIDs, point: nil)
     precondition(view.displayed == extruded.mesh && view.surface.geometry!.elements.map(\.primitiveCount) == [18, 2])
     try edit(.extrude([2]), 1)
