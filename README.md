@@ -1,14 +1,16 @@
 # 3D Model Studio
 
-Build a native macOS application with a Swift UI for viewing, creating, and editing 3D models through both direct geometry manipulation and a conversational AI agent. Users can configure the agent and model, describe changes, and apply AI instructions to selected geometry.
+3D Model Studio is a native macOS application with a SwiftUI interface for inspecting, creating, and editing 3D models.
 
-## Problem
+## v1 scope
 
-Users need a single workspace to inspect 3D files, create geometry from descriptions, and refine it through a combination of manual edits and conversational instructions.
+- Open STL, OBJ, and 3MF models as editable geometry and inspect them in a 3D viewport.
+- Create models from descriptions and refine new or imported models through manual edits or conversation, including instructions targeting selected faces.
+- Use precise dimensional controls with explicit units and optional persistent dimensions, and check geometry for 3D printing.
+- Save editable models for later work and export geometry for slicing while preserving physical dimensions.
+- Use Codex, Claude, or Antigravity for conversational modeling. All three integrations are required in v1, with agent switching and model selection in Settings.
 
-## Scope
-
-Proposed v1, pending confirmation: a native macOS application with a Swift UI, basic 3D viewing, conversational model creation and revision, manual geometry editing, selection-based AI edits, and agent/model settings. Use a basic visual appearance. Out of v1: advanced rendering and material authoring. The intended modeling domain, the balance between creation and imported-model editing, import coverage, and supported agent integrations remain open. Codex, Claude, and Antigravity were suggested as candidate agents, not confirmed integrations.
+Supported integration methods and modeling capabilities for Codex, Claude, and Antigravity still require technical verification. [Implementation task I-5](docs/features/3d-model-studio/implementation/plan.md#i-5-integrate-all-three-agents-with-model-settings-and-geometry-access-controls) tracks that work.
 
 ## Specification
 
