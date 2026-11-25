@@ -111,3 +111,7 @@ Managed I-7, Review edits beyond selected faces, is complete at the implementati
 ### Agent · 2026-11-25
 
 Approved I-8 in progress. Implement REQ-007 on the local indexed triangle mesh and expose its result in the workspace. REQ-009 now records the export obligation. The pre-approval DEC-006 explicitly leaves the format open, so the exporter and slicer acceptance remain blocked. The previously reserved plan and overview changes remain outside this step.
+
+### Agent · 2026-11-25
+
+Approved I-8 outcome: REQ-007 print validation is implemented and covered by interpreted checks in f7dbc19. All manual-edit, provider and dimension suites passed, including failing geometry, highlighted regions and stale-result handling. macOS 14 type-checking with warnings as errors and project plist validation passed. Build and interactive app verification were outside this step's controls. The export fallback was used. REQ-009 remains blocked because the pre-approval DEC-006 left the slicer format open. The combined completion condition remains unmet until a slicer opens exports from both origins at the expected dimensions.
