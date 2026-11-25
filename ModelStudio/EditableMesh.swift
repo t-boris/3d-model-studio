@@ -44,6 +44,14 @@ struct EditableMesh: Equatable, Codable {
         nextFaceID += 1
     }
 
+    mutating func replaceCorners(at index: Int, with corners: SIMD3<Int>) {
+        faces[index].vertices = corners
+    }
+
+    func canAppendFaces(_ count: Int) -> Bool {
+        count < Int.max - nextFaceID
+    }
+
     func checked() throws -> Self {
         guard !faces.isEmpty else {
             throw MeshImportError("The file has no mesh faces. Export a surface or solid mesh.")

@@ -58,7 +58,7 @@ struct WorkspaceView: View {
     var body: some View {
         Group {
             if let model = workspace.activeModel {
-                ModelViewport(mesh: model.mesh)
+                ManualEditorView(workspace: workspace, model: model, editingEnabled: canOpen)
                     .id(model.id)
                     .safeAreaInset(edge: .top, spacing: 0) {
                         DimensionControls(workspace: workspace, model: model)

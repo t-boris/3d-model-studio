@@ -1,20 +1,146 @@
 import SceneKit
 import SwiftUI
 
+// Forward the full gesture to SceneKit for orbiting. Only a stationary click
+// picks geometry, so finishing an orbit never toggles a triangle.
+final class PickingSceneView: SCNView {
+    var onPick: ((CGPoint) -> Void)?
+    private var down: CGPoint?
+
+    override func mouseDown(with event: NSEvent) {
+        down = event.locationInWindow
+        super.mouseDown(with: event)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        if let down, hypot(event.locationInWindow.x - down.x, event.locationInWindow.y - down.y) > 3 {
+            self.down = nil
+        }
+        super.mouseDragged(with: event)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        super.mouseUp(with: event)
+        if down != nil { onPick?(convert(event.locationInWindow, from: nil)) }
+        down = nil
+    }
+}
+
 struct ModelViewport: NSViewRepresentable {
     let mesh: EditableMesh
+    let selectedFaces: Set<Int>
+    let selectedPoint: Int?
+    let pick: (Int, Int) -> Void
 
     final class Coordinator {
         let surface = SCNNode()
+        let wire = SCNNode()
+        let marker = SCNNode(geometry: SCNSphere(radius: 0.028))
         var displayed: EditableMesh?
+        var highlighted: Set<Int> = []
+        var faceGroups: [[Int]] = []
+        var positions: [SCNVector3] = []
+        var vertexSource: SCNGeometrySource?
+        var normalSource: SCNGeometrySource?
+
+        init() {
+            wire.categoryBitMask = 2
+            marker.categoryBitMask = 2
+            wire.renderingOrder = 1
+            marker.renderingOrder = 2
+            marker.geometry?.firstMaterial?.diffuse.contents = NSColor.systemOrange
+        }
+
+        func update(mesh: EditableMesh, selection: Set<Int>, point: Int?) {
+            let changed = displayed != mesh
+            if changed {
+                // Normalize the display copy. Source coordinates and face IDs remain in model space.
+                let (low, high) = mesh.surfaceBounds
+                let center = high * 0.5 + low * 0.5
+                let radius = (high * 0.5 - low * 0.5).max()
+                positions = mesh.vertices.map {
+                    let p = ($0 - center) / (radius > 0 ? radius : 1)
+                    return SCNVector3(p.x, p.z, -p.y)
+                }
+                var corners: [SCNVector3] = []
+                var normals: [SCNVector3] = []
+                for face in mesh.faces {
+                    let v = face.vertices
+                    let a = positions[v.x], b = positions[v.y], c = positions[v.z]
+                    let cross = simd_cross(SIMD3<Float>(b) - SIMD3<Float>(a), SIMD3<Float>(c) - SIMD3<Float>(a))
+                    let n = simd_length_squared(cross) > 0 ? simd_normalize(cross) : SIMD3(0, 1, 0)
+                    corners.append(contentsOf: [a, b, c])
+                    normals.append(contentsOf: repeatElement(SCNVector3(n), count: 3))
+                }
+                vertexSource = SCNGeometrySource(vertices: corners)
+                normalSource = SCNGeometrySource(normals: normals)
+                let triangles = SCNGeometryElement(data: nil, primitiveType: .triangles,
+                                                   primitiveCount: mesh.faces.count, bytesPerIndex: 0)
+                let outline = SCNGeometry(sources: [vertexSource!], elements: [triangles])
+                let ink = SCNMaterial()
+                ink.fillMode = .lines
+                ink.lightingModel = .constant
+                ink.diffuse.contents = NSColor.darkGray
+                ink.isDoubleSided = true
+                ink.writesToDepthBuffer = false
+                outline.materials = [ink]
+                wire.geometry = outline
+                displayed = mesh
+            }
+
+            if changed || selection != highlighted {
+                // SceneKit returns an element and primitive index. Keep their
+                // mapping to mesh faces even when a selected face changes color.
+                let groups = Dictionary(grouping: mesh.faces.indices) { selection.contains(mesh.faces[$0].id) }
+                var elements: [SCNGeometryElement] = []
+                var materials: [SCNMaterial] = []
+                faceGroups = []
+                for selected in [false, true] {
+                    guard let faces = groups[selected] else { continue }
+                    let indices = faces.flatMap { i in [UInt32(i * 3), UInt32(i * 3 + 1), UInt32(i * 3 + 2)] }
+                    elements.append(SCNGeometryElement(indices: indices, primitiveType: .triangles))
+                    let material = SCNMaterial()
+                    material.diffuse.contents = selected ? NSColor.systemOrange : NSColor.systemTeal
+                    material.isDoubleSided = true
+                    materials.append(material)
+                    faceGroups.append(faces)
+                }
+                let geometry = SCNGeometry(sources: [vertexSource!, normalSource!], elements: elements)
+                geometry.materials = materials
+                surface.geometry = geometry
+                highlighted = selection
+            }
+
+            marker.isHidden = true
+            if let point, positions.indices.contains(point) {
+                marker.position = positions[point]
+                marker.isHidden = false
+            }
+        }
+
+        func selection(element: Int, primitive: Int, near position: SCNVector3) -> (face: Int, point: Int)? {
+            guard let mesh = displayed, faceGroups.indices.contains(element),
+                  faceGroups[element].indices.contains(primitive) else { return nil }
+            let face = mesh.faces[faceGroups[element][primitive]]
+            let hit = SIMD3<Float>(position)
+            let corners = [face.vertices.x, face.vertices.y, face.vertices.z]
+            let nearest = corners.min {
+                simd_distance_squared(hit, SIMD3<Float>(positions[$0])) <
+                    simd_distance_squared(hit, SIMD3<Float>(positions[$1]))
+            }!
+            return (face.id, nearest)
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    func makeNSView(context: Context) -> SCNView {
-        let view = SCNView()
+    func makeNSView(context: Context) -> PickingSceneView {
+        let view = PickingSceneView()
         let scene = SCNScene()
-        scene.rootNode.addChildNode(context.coordinator.surface)
+        let coordinator = context.coordinator
+        for node in [coordinator.surface, coordinator.wire, coordinator.marker] {
+            scene.rootNode.addChildNode(node)
+        }
         view.scene = scene
         view.backgroundColor = .textBackgroundColor
         view.antialiasingMode = .multisampling4X
@@ -35,44 +161,15 @@ struct ModelViewport: NSViewRepresentable {
         return view
     }
 
-    func updateNSView(_ view: SCNView, context: Context) {
+    func updateNSView(_ view: PickingSceneView, context: Context) {
         let coordinator = context.coordinator
-        guard coordinator.displayed != mesh else { return }
-        coordinator.surface.geometry = geometry()
-        coordinator.displayed = mesh
-    }
-
-    private func geometry() -> SCNGeometry {
-        // Normalize the display copy before converting to GPU floats. Physical
-        // coordinates, face order and vertex sharing stay in the editable mesh.
-        let (low, high) = mesh.surfaceBounds
-        let center = high * 0.5 + low * 0.5
-        let radius = (high * 0.5 - low * 0.5).max()
-        let scale = radius > 0 ? radius : 1
-        func displayPoint(_ index: Int) -> SIMD3<Float> {
-            let p = (mesh.vertices[index] - center) / scale
-            return SIMD3(Float(p.x), Float(p.z), Float(-p.y))
+        coordinator.update(mesh: mesh, selection: selectedFaces, point: selectedPoint)
+        view.onPick = { [weak view] location in
+            guard let hit = view?.hitTest(location, options: [.categoryBitMask: 1, .backFaceCulling: false]).first,
+                  hit.node === coordinator.surface,
+                  let target = coordinator.selection(element: hit.geometryIndex, primitive: hit.faceIndex,
+                                                     near: hit.localCoordinates) else { return }
+            pick(target.face, target.point)
         }
-        var positions: [SCNVector3] = []
-        var normals: [SCNVector3] = []
-        positions.reserveCapacity(mesh.faces.count * 3)
-        normals.reserveCapacity(mesh.faces.count * 3)
-        for face in mesh.faces {
-            let a = displayPoint(face.vertices.x)
-            let b = displayPoint(face.vertices.y)
-            let c = displayPoint(face.vertices.z)
-            let cross = simd_cross(b - a, c - a)
-            let normal = simd_length_squared(cross) > 0 ? simd_normalize(cross) : SIMD3(0, 1, 0)
-            positions.append(contentsOf: [SCNVector3(a), SCNVector3(b), SCNVector3(c)])
-            normals.append(contentsOf: repeatElement(SCNVector3(normal), count: 3))
-        }
-        let element = SCNGeometryElement(data: nil, primitiveType: .triangles, primitiveCount: mesh.faces.count,
-                                         bytesPerIndex: 0)
-        let geometry = SCNGeometry(sources: [.init(vertices: positions), .init(normals: normals)], elements: [element])
-        let material = SCNMaterial()
-        material.diffuse.contents = NSColor.systemTeal
-        material.isDoubleSided = true
-        geometry.materials = [material]
-        return geometry
     }
 }

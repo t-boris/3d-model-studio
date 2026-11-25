@@ -53,6 +53,12 @@ final class Workspace: ObservableObject {
         try activeModel?.commit(proposal, requested: requested)
     }
 
+    func applyManualEdit(_ edit: ManualMeshEdit, basedOn model: WorkspaceModel,
+                         distance: Double, unit: MeshUnit) throws {
+        let proposal = try edit.proposal(for: model, distance: distance, unit: unit)
+        try commit(proposal, basedOn: model)
+    }
+
     func pinCurrent(_ dimension: ModelDimension) {
         do { try activeModel?.pinCurrent(dimension) }
         catch { modelError = error.localizedDescription }

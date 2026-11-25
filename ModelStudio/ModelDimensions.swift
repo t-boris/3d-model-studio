@@ -26,6 +26,11 @@ struct DimensionTarget: Equatable, Codable {
     let value: Double
     let unit: MeshUnit
 
+    static func matches(measuredMM: Double, targetMM: Double) -> Bool {
+        measuredMM.isFinite && targetMM.isFinite &&
+            measuredMM >= targetMM - toleranceMM && measuredMM <= targetMM + toleranceMM
+    }
+
     func millimeters() throws -> Double {
         let mm = value * unit.millimetersPerUnit
         guard value >= 0, mm.isFinite else {
@@ -37,8 +42,7 @@ struct DimensionTarget: Equatable, Codable {
     func check(extents: SIMD3<Double>, modelUnit: MeshUnit, pinned: Bool) throws {
         let target = try millimeters()
         let measured = extents[dimension.axis] * modelUnit.millimetersPerUnit
-        guard measured.isFinite, measured >= target - Self.toleranceMM,
-              measured <= target + Self.toleranceMM else {
+        guard Self.matches(measuredMM: measured, targetMM: target) else {
             let kind = pinned ? "Pinned" : "Requested"
             throw MeshImportError("\(kind) \(dimension.label) requires \(value) \(unit.symbol). The proposal measures \(measured) mm (tolerance ±\(Self.toleranceMM) mm).")
         }
