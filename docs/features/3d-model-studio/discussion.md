@@ -159,3 +159,7 @@ Current plan I-1 is in progress. ThreeMFReader currently expands same-part Core 
 ### Agent · 2026-11-25
 
 Current-plan I-1 import implementation and offline checks passed. Commit 1942bbc adds package-part resolution and assembly mappings. Tests/run-assembly-checks.sh verified the Bambu Studio and OrcaSlicer fixtures and the three-occurrence mixed-unit case, fourteen rejected opens with edited geometry and pins preserved, and both canceled unit prompts. The dimension, manual/print and offline provider regressions passed. Application sources type-checked for macOS 14 with warnings as errors. Build-disabled controls leave interactive orbit/zoom and live acceptance for a later run. REQ-002 criteria 2, 3 and 4 have interpreted evidence. The dirty replacement prompt belongs to I-7 and export belongs to I-8.
+
+### Codex · 2026-11-25
+
+Current implementation plan I-2 is complete at b367f9a. Manual, dimension, assembly and offline provider checks passed, along with macOS 14 source type-checking. On both producer saves and the repeated assembly, extrusion kept the original cap IDs, associated each wall with the selected occurrence, kept sibling geometry intact and preserved ownership through an editable archive round trip. Pin conflicts preserved the mesh and pins and reported the affected dimension. No app build or interactive app session was run.
