@@ -183,3 +183,11 @@ Current plan I-5 is in progress. Settings currently relies on Docker images and 
 ### Agent · 2026-11-25
 
 Current plan I-5 source implementation is complete in 157d857. Settings provisions the native runtime for each provider, tests the chosen model with a geometry-free challenge, saves verified credentials in Keychain and offers retry, repair and disconnect. Tests/run-provider-checks.sh passed the installer and subprocess doubles for all three providers, including both Mac architecture layouts, all six model choices, credential and download failures, reconnect and selection isolation. The six vendor archives matched the packaged checksums and executable locations. The assembly, dimension and manual/print regressions and macOS 14 warnings-as-errors source type-check passed. No app was built or deployed. Clean-Mac installation, Finder launch, actual Keychain access, live authentication and a successful modeling operation per provider remain release evidence. The unrelated tasks/todo.md remains untouched at the supervisor’s direction.
+
+### Agent · 2026-11-25
+
+Current plan I-6 is in progress. REQ-007’s indexed report already receives the same mesh used by manual edits and by accepted conversational proposals. The inspector colors affected faces, but a collapsed triangle has no filled area to show and an occluded reported face can hide its highlight. The step will add a visible outline for face issues, keep the edge marker and documented check scope, and exercise failure, repair and stale results through the production edit paths, including multipart 3MF.
+
+### Agent · 2026-11-25
+
+Current plan I-6 is complete in b3bfd0d. The inspector outlines collapsed and occluded faces, draws the exact problem edge, retains corrective guidance and scope, and names the 3MF occurrence. Interpreted production checks verified failure, stale state and repair through Move Point on seven model origins, through twelve scripted whole-model paths, and through nine scripted multipart selection paths. All five defect types and exact face and edge identities were checked. Assembly, dimension and macOS 14 source regressions passed. Build and deployment were disabled. The pre-existing tasks/todo.md was left untouched at the supervisor’s direction.
