@@ -33,3 +33,18 @@ To check failure handling, open a valid block, adjust the view, then open a copy
 Open a fresh block, choose **Reshape Surface**, select the two top triangles and choose **Ask Agent → Edit Selected Faces…**. Ask to raise the top to a whole-model height of 7 mm by moving its four corners. For a proposal that moves those shared corners, the review should show the affected side triangles in orange and the affected selected top in indigo. Any earlier approval to share neighboring geometry applies only to reading it.
 
 Choose **Decline Edit** and verify the height remains 5 mm. Submit the same request again and review the new proposal. **Confirm Outside Changes** should apply a candidate that measures 7 mm and satisfies all active pins. To exercise rejection, start with a fresh import, pin its 5 mm height and confirm a proposal that raises it to 7 mm. The workspace should retain the original mesh and identify the pinned height conflict.
+
+## Multipart 3MF assemblies
+
+Both slicer fixtures are original project saves. Each slicer arranged two copies of this repository's 20 × 10 × 5 mm block on a plate and wrote a start model, its relationships, and two referenced mesh parts. The table gives the minimum and maximum corner of each occurrence in build order, in millimeters.
+
+| Fixture | First block | Second block |
+| --- | --- | --- |
+| [Bambu Studio 02.09.01.70](Assemblies/bambu-blocks.3mf) | (90.00001, 100.99999, 0) to (110.00001, 110.99999, 5) | (90, 89.00003, 0) to (110, 99.00003, 5) |
+| [OrcaSlicer 2.5.2](Assemblies/orca-blocks.3mf) | (90, 101, 0) to (110, 111, 5) | (90.000001, 89, 0) to (110.000001, 99, 5) |
+
+Provenance for both saves is 2026-11-25 on macOS. The CLI inputs were copies of `Fixtures/Import/block.stl` named `block.stl` and `twin.stl`, supplied in that order with `--arrange 1 --export-3mf` and a temporary data directory. Each file's root XML records the producer version. OrcaSlicer also writes a BambuStudio compatibility version in its Application metadata. The SHA-256 digests of the archived saves are `23af39a2f14e72b83c617b5272539e8f3c1ba4c880bdd44062d47df6a4a06f5a` (Bambu) and `f9d96e94d55157e3bf01fd1e1e4908773ee6f6c25f9bc53eeb2f29bfb9760fa8` (Orca).
+
+The [synthetic repeated-block fixture](Assemblies/repeated-block.3mf) places one centimeter mesh three times in a start model with the default millimeter unit. Its first build item rotates two nested occurrences, one mirrored. Its second build item references the child part directly. Expected bounds in occurrence order are (88, 55, 10) to (98, 75, 15), (88, 90, 10) to (98, 110, 15), and (200, 0, 0) to (220, 10, 5) mm. Object ID 1 occurs in both model parts.
+
+Run `Tests/run-assembly-checks.sh` from the checkout. It checks each occurrence's coordinates, eight shared vertices, twelve outward-facing triangles, source mapping and stable face IDs. It sends each imported mesh through the SceneKit viewport, a manual point edit and a scripted conversational revision, and checks that the other occurrences keep their positions. The same suite opens invalid packages over an edited, pinned workspace and exercises cancellation at both unit prompts.

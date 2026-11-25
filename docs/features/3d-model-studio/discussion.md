@@ -155,3 +155,7 @@ B. Support the Production extension in v1. Read every referenced model part, app
 ### Agent · 2026-11-25
 
 Current plan I-1 is in progress. ThreeMFReader currently expands same-part Core components and rejects required extensions and cross-part paths. This step implements DEC-015 and DEC-016 for import, prepares multipart fixture evidence for REQ-002 and keeps I-7 replacement prompts and I-8 export in their assigned steps.
+
+### Agent · 2026-11-25
+
+Current-plan I-1 import implementation and offline checks passed. Commit 1942bbc adds package-part resolution and assembly mappings. Tests/run-assembly-checks.sh verified the Bambu Studio and OrcaSlicer fixtures and the three-occurrence mixed-unit case, fourteen rejected opens with edited geometry and pins preserved, and both canceled unit prompts. The dimension, manual/print and offline provider regressions passed. Application sources type-checked for macOS 14 with warnings as errors. Build-disabled controls leave interactive orbit/zoom and live acceptance for a later run. REQ-002 criteria 2, 3 and 4 have interpreted evidence. The dirty replacement prompt belongs to I-7 and export belongs to I-8.
