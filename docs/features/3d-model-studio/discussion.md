@@ -219,3 +219,11 @@ The first Debug build launched, displayed both unit prompts, and rendered the ST
 ### Agent · 2026-11-25
 
 I-1 passed on macOS 27.2.1 with Model Studio 0.1.0 (1), arm64 Debug, built in Xcode 27.2. Commit 53bcce5 keeps scroll zoom within a bounded field of view. The built app opened, orbited, zoomed and moved a picked point on STL, OBJ, Core 3MF, Bambu Studio Production 3MF and OrcaSlicer Production 3MF. The Core point moved from Z = 0.5 to 0.6 cm, and both producer files moved from Z = 5 to 6 mm. Opening the missing-part package named 3D/parts/block.model and retained the edited OrcaSlicer assembly, selection and camera view. Assembly, manual edit, dimension, offline provider and workspace file suites passed. Both producer hashes match the fixture README. There are no pending orbit, zoom or manual point-edit observations for I-1. Conversational edits used scripted provider replies. Live provider operations remain I-5 acceptance evidence. The pre-existing untracked tasks/todo.md remains preserved.
+
+### Codex · 2026-11-25
+
+I-2 started from ff1b026. Direct edits now prepare and check the explicit displacement inside the workspace transaction used by numerical dimension changes and geometry proposals. Current pins are checked before publication. Native build and tolerance boundary checks are in progress. The supervisor directed that the unrelated, pre-existing tasks/todo.md remain untracked.
+
+### Codex · 2026-11-25
+
+I-2 acceptance passed on Xcode 27.2 for the macOS arm64 Debug build of bc20e9f. Native controls exercised all three manual tools, dimension entry, target expiry, pin addition, change and removal, and a named height rejection. The manual, dimension and assembly suites passed, including inclusive numerical limits and sibling occurrence isolation. The workspace-file and offline provider suites passed regression checks. Build log is .dde/cache/i2/xcodebuild.log.
