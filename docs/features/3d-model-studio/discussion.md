@@ -83,3 +83,7 @@ I-4 started on the I-3 workspace. The manual tool scope is recorded in REQ-004. 
 ### Agent · 2026-11-25
 
 I-4 implementation and interpreted checks completed in 0b4fdc3 and 9bc7ce9. The same workspace path moved a point, reshaped shared top vertices and extruded the selected patch on a new block, STL, OBJ and transformed 3MF. Tests checked SceneKit face picking and refreshed geometry, stable cap IDs, perimeter walls and pin conflicts. Application sources passed macOS 14 static type-checking. Building was disabled, so interactive app verification remains pending. The existing overview lifecycle edit is supervisor-reserved.
+
+### Agent · 2026-11-25
+
+Cockpit I-5 (agent integrations, currently numbered I-6 in the working plan) underway. REQ-006 and DEC-003/007 require actual provider agents, explicit model selection and operation-limited input. Supervisor requires offline verification, no credential use or provisioning, and individual evidence. Runtime/provider entitlement remains unverified. Earlier overview and plan edits remain reserved. Findings F-001/F-006 retain their resolved specification status.
