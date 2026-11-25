@@ -24,6 +24,17 @@ final class PickingSceneView: SCNView {
         if down != nil { onPick?(convert(event.locationInWindow, from: nil)) }
         down = nil
     }
+
+    override func scrollWheel(with event: NSEvent) {
+        guard allowsCameraControl, let camera = pointOfView?.camera else {
+            super.scrollWheel(with: event)
+            return
+        }
+        // Change magnification without moving the orbit camera through the model.
+        let sensitivity = event.hasPreciseScrollingDeltas ? 0.004 : 0.08
+        let step = min(max(event.scrollingDeltaY * sensitivity, -0.35), 0.35)
+        camera.fieldOfView = min(max(camera.fieldOfView * exp(-step), 12), 100)
+    }
 }
 
 struct ModelViewport: NSViewRepresentable {
