@@ -207,3 +207,15 @@ I-8 is in progress. The saved assembly maps each edited face to a build item and
 ### Agent · 2026-11-25
 
 I-8 met its assigned completion condition. c09f5ea connects the workspace to validated Core 3MF export. 582c163 records the repeatable export and slicer checks, two acceptance files, raw measurements and GUI capture instructions. Tests verified exact serialized geometry, destination preservation, repair and placement for three assemblies directly and after reopening. PrusaSlicer 2.9.7 measured 24 × 12 × 8 mm and 20 × 10 × 7 mm. Swapping the files failed on all six axes. The workspace-file, assembly, manual/print, dimension and offline provider suites and macOS 14 warnings-as-errors source type-check passed. The supervisor reserved GUI openings for release verification. The pre-existing untracked tasks/todo.md remains untouched at supervisor direction.
+
+### Agent · 2026-11-25
+
+Build-enabled I-1 verification is in progress. The branch already carries the four import paths and assembly ownership checks. The remaining REQ-002 navigation checkbox will be evaluated in the current native build, alongside reruns of the fixture and scripted-edit evidence. The approved decisions and resolved specification findings still govern this step.
+
+### Agent · 2026-11-25
+
+The first Debug build launched, displayed both unit prompts, and rendered the STL and OBJ blocks with eight vertices and twelve faces. A native drag orbited the STL. One scroll gesture made either block disappear from the viewport. REQ-002 navigation remains open while bounded zoom is implemented and checked.
+
+### Agent · 2026-11-25
+
+I-1 passed on macOS 27.2.1 with Model Studio 0.1.0 (1), arm64 Debug, built in Xcode 27.2. Commit 53bcce5 keeps scroll zoom within a bounded field of view. The built app opened, orbited, zoomed and moved a picked point on STL, OBJ, Core 3MF, Bambu Studio Production 3MF and OrcaSlicer Production 3MF. The Core point moved from Z = 0.5 to 0.6 cm, and both producer files moved from Z = 5 to 6 mm. Opening the missing-part package named 3D/parts/block.model and retained the edited OrcaSlicer assembly, selection and camera view. Assembly, manual edit, dimension, offline provider and workspace file suites passed. Both producer hashes match the fixture README. There are no pending orbit, zoom or manual point-edit observations for I-1. Conversational edits used scripted provider replies. Live provider operations remain I-5 acceptance evidence. The pre-existing untracked tasks/todo.md remains preserved.
