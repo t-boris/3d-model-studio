@@ -33,8 +33,16 @@ All three adapters receive the same native projection as UTF-8 JSON following th
 - **Creation** includes the description, current draft surface and units. An empty draft starts in millimeters.
 - **Revision** includes the instruction and complete active indexed surface. Vertices unreferenced by any face are excluded.
 - **Selection** includes the instruction, target face IDs, those triangles, their referenced vertices and perimeter edges. File names, unrelated faces, isolated vertices, pins and whole-model measurements are excluded.
-- An agent may request particular face IDs or neighbors across identified perimeter edges. The studio resolves them against the operation snapshot and presents the exact additional face IDs and reason. An approval token belongs to that one pending review.
+- An agent may request particular face IDs or neighbors across identified perimeter edges. The studio resolves them against the operation snapshot and highlights the additional triangles locally and presents their exact IDs and the reason. An approval token belongs to that one pending review.
 - Approval resends the original instruction, original target and specifically approved context. The additional faces are labeled read-only. Declining displays the reason and ends the request. Closing, replacing, failing, or completing a request expires its approvals. Every new request takes a fresh Settings snapshot.
 - The reply is a typed explanation, access request or indexed mesh patch. A patch can describe added, changed or removed geometry. The provider has no workspace commit capability.
 
-Offline verification uses the production session, request encoder, provider routes and response decoder with a scripted transport. Run `Tests/run-provider-checks.sh` from the checkout. Authenticated model access, runtime image execution and live modeling quality require separate verification.
+## Verification evidence
+
+| Provider | Evidence from offline checks |
+| --- | --- |
+| Codex | Captured both GPT-6.2 choices and the ephemeral Codex CLI invocation. Scripted creation, revision and selection requests passed, including approval, refusal and expiry. |
+| Claude | Captured both model aliases, print mode, the empty built-in tool set and strict MCP configuration. The same three workflows and disclosure checks passed. Switching from an in-flight Codex request to Claude discarded the late Codex reply. |
+| Antigravity | Captured both Gemini choices at the Swift boundary. The packaged Python adapter passed the exact input and chosen model to an SDK double with the deny-by-default, finish-only policy. The same workflow and disclosure checks passed. |
+
+The checks use the production session, request encoder, provider routes and response decoder with a scripted transport. A local echo process also verified the native subprocess I/O with a 300 KB payload for each route. Run `Tests/run-provider-checks.sh` from the checkout. Authenticated model access, runtime image execution and live modeling quality require separate verification.

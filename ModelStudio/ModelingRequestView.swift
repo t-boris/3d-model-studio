@@ -26,10 +26,18 @@ struct ModelingRequestView: View {
                 .disabled(session.busy || session.review != nil)
             if let review = session.review {
                 Text("Share additional geometry?").font(.headline)
-                Text(review.reason)
+                if let model = scope.model {
+                    ModelViewport(mesh: model.mesh, selectedFaces: review.faceIDs, selectedPoint: nil) { _, _ in }
+                        .frame(height: 160)
+                        .accessibilityLabel("Additional faces requested for read access")
+                }
                 ScrollView {
-                    Text("Faces " + review.faceIDs.sorted().map(String.init).joined(separator: ", "))
-                        .frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(review.reason)
+                        Text("Faces " + review.faceIDs.sorted().map(String.init).joined(separator: ", "))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
                 }.frame(maxHeight: 80)
                 Text("Approval grants read access to these faces for this request.")
                 HStack {
