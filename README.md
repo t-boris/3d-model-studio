@@ -26,7 +26,7 @@ Use **Save Editable Model…** (Command-S) to write a `.studio3d` file. Use **Op
 - Save editable models for later work and export geometry for slicing while preserving physical dimensions.
 - Use Codex, Claude, or Antigravity for conversational modeling. All three integrations are required in v1, with agent switching and model selection in Settings.
 
-Supported integration methods and modeling capabilities for Codex, Claude, and Antigravity still require technical verification. [Implementation task I-5](docs/features/3d-model-studio/implementation/plan.md#i-5-integrate-all-three-agents-with-model-settings-and-geometry-access-controls) tracks that work.
+Settings route modeling requests to Codex CLI, Claude Code, or Google's Antigravity SDK. Each runs in a disposable container with operation-scoped geometry. The adapters return proposals for review. Live provider access and conversational application of patches still require verification. [Provider setup, model choices and evidence](Providers/README.md)
 
 ## Specification
 

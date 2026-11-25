@@ -10,6 +10,7 @@ struct ManualEditorView: View {
     @ObservedObject var workspace: Workspace
     let model: WorkspaceModel
     let editingEnabled: Bool
+    let request: (ModelingScope) -> Void
     @State private var tool = ManualTool.point
     @State private var selectedPoint: Int?
     @State private var selectedFaces: Set<Int> = []
@@ -17,7 +18,8 @@ struct ManualEditorView: View {
     @State private var unit: MeshUnit
     @State private var distance = ""
 
-    init(workspace: Workspace, model: WorkspaceModel, editingEnabled: Bool) {
+    init(workspace: Workspace, model: WorkspaceModel, editingEnabled: Bool, request: @escaping (ModelingScope) -> Void) {
+        self.request = request
         self.workspace = workspace
         self.model = model
         self.editingEnabled = editingEnabled
@@ -49,6 +51,12 @@ struct ManualEditorView: View {
                 }
                 .pickerStyle(.segmented)
                 HStack {
+                    Menu("Ask Agent") {
+                        Button("Revise Entire Model…") { request(.revision(model)) }
+                        Button("Edit Selected Faces…") { request(.selection(model, selectedFaces)) }
+                            .disabled(tool == .point || selectedFaces.isEmpty)
+                        Button("Continue Creating This Model…") { request(.creation(draft: model)) }
+                    }.fixedSize()
                     selectionLabel
                     Spacer()
                     if edit != nil {

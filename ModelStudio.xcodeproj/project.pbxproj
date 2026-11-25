@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		27F1A919E74EA13E5F417296 /* StudioSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE7C15A7743CB087F3DAA8C /* StudioSettingsView.swift */; };
+		A4F32A5A50FB4F0F9FD3C328 /* ModelingRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B75028F5F6F4492281F2AFFE /* ModelingRequestView.swift */; };
+		F17086C28EC84B99B19FF96F /* ModelingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1950424F2D0D4490BD21105F /* ModelingSession.swift */; };
+		C49A2209ED3A4B8BB3232FFD /* ModelingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD0600F7A524D50A70AD824 /* ModelingProvider.swift */; };
+		D8C3174D4322419DAEEEB9A0 /* ModelingContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB68A66D7D1B4764BE7D6214 /* ModelingContext.swift */; };
 		3C9264AE99EC78244BD91D55 /* ModelStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00262AD6880714E663FD8184 /* ModelStudioApp.swift */; };
 		71063C2E38EE41F79264E2B9 /* EditableMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15A66DBABCEA43DB857C2169 /* EditableMesh.swift */; };
 		B3B4A6F4C72F4986B6CFE514 /* DimensionControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */; };
@@ -26,6 +30,10 @@
 /* Begin PBXFileReference section */
 		00262AD6880714E663FD8184 /* ModelStudioApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStudioApp.swift; sourceTree = "<group>"; };
 		5AE7C15A7743CB087F3DAA8C /* StudioSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioSettingsView.swift; sourceTree = "<group>"; };
+		B75028F5F6F4492281F2AFFE /* ModelingRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingRequestView.swift; sourceTree = "<group>"; };
+		1950424F2D0D4490BD21105F /* ModelingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingSession.swift; sourceTree = "<group>"; };
+		CCD0600F7A524D50A70AD824 /* ModelingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingProvider.swift; sourceTree = "<group>"; };
+		BB68A66D7D1B4764BE7D6214 /* ModelingContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingContext.swift; sourceTree = "<group>"; };
 		15A66DBABCEA43DB857C2169 /* EditableMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableMesh.swift; sourceTree = "<group>"; };
 		0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionControls.swift; sourceTree = "<group>"; };
 		127BCA5384464AEBBB4A680C /* EditableModelFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableModelFile.swift; sourceTree = "<group>"; };
@@ -47,6 +55,10 @@
 			children = (
 				00262AD6880714E663FD8184 /* ModelStudioApp.swift */,
 				5AE7C15A7743CB087F3DAA8C /* StudioSettingsView.swift */,
+				B75028F5F6F4492281F2AFFE /* ModelingRequestView.swift */,
+				1950424F2D0D4490BD21105F /* ModelingSession.swift */,
+				CCD0600F7A524D50A70AD824 /* ModelingProvider.swift */,
+				BB68A66D7D1B4764BE7D6214 /* ModelingContext.swift */,
 				15A66DBABCEA43DB857C2169 /* EditableMesh.swift */,
 				0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */,
 				127BCA5384464AEBBB4A680C /* EditableModelFile.swift */,
@@ -134,6 +146,10 @@
 			files = (
 				3C9264AE99EC78244BD91D55 /* ModelStudioApp.swift in Sources */,
 				27F1A919E74EA13E5F417296 /* StudioSettingsView.swift in Sources */,
+				A4F32A5A50FB4F0F9FD3C328 /* ModelingRequestView.swift in Sources */,
+				F17086C28EC84B99B19FF96F /* ModelingSession.swift in Sources */,
+				C49A2209ED3A4B8BB3232FFD /* ModelingProvider.swift in Sources */,
+				D8C3174D4322419DAEEEB9A0 /* ModelingContext.swift in Sources */,
 				71063C2E38EE41F79264E2B9 /* EditableMesh.swift in Sources */,
 				B3B4A6F4C72F4986B6CFE514 /* DimensionControls.swift in Sources */,
 				9C2C92DDB6DA469591E32747 /* EditableModelFile.swift in Sources */,

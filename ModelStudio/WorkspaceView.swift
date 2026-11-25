@@ -42,11 +42,12 @@ struct WorkspaceCommands: Commands {
 struct WorkspaceView: View {
     @StateObject private var workspace = Workspace()
     @State private var showingOpen = false
+    @State private var modelingSheet: ModelingSheet?
     @State private var showingSave = false
     @State private var savingFile: EditableModelFile?
 
     private var canOpen: Bool {
-        !showingOpen && !showingSave && !workspace.isReading && workspace.pendingUnits == nil
+        modelingSheet == nil && !showingOpen && !showingSave && !workspace.isReading && workspace.pendingUnits == nil
     }
 
     private func save() {
@@ -58,7 +59,9 @@ struct WorkspaceView: View {
     var body: some View {
         Group {
             if let model = workspace.activeModel {
-                ManualEditorView(workspace: workspace, model: model, editingEnabled: canOpen)
+                ManualEditorView(workspace: workspace, model: model, editingEnabled: canOpen) { scope in
+                    modelingSheet = ModelingSheet(scope: scope)
+                }
                     .id(model.id)
                     .safeAreaInset(edge: .top, spacing: 0) {
                         DimensionControls(workspace: workspace, model: model)
@@ -82,6 +85,8 @@ struct WorkspaceView: View {
                 } description: {
                     Text("Create a block or open an editable model, STL, OBJ, or 3MF.")
                 } actions: {
+                    Button("Create from Description…") { modelingSheet = ModelingSheet(scope: .creation(draft: nil)) }
+                        .disabled(!canOpen)
                     Button("New Block", action: workspace.newBlock).disabled(!canOpen)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -122,6 +127,9 @@ struct WorkspaceView: View {
             if case .failure(let error) = result, (error as NSError).code != NSUserCancelledError {
                 workspace.modelError = error.localizedDescription
             }
+        }
+        .sheet(item: $modelingSheet) { sheet in
+            ModelingRequestView(scope: sheet.scope)
         }
         .sheet(item: $workspace.pendingUnits) { loaded in
             UnitChoiceView(fileName: loaded.name, accept: workspace.acceptUnit) {
