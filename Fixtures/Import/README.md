@@ -14,6 +14,14 @@ The STL repeats corners in its facets. The OBJ uses relative vertex indices and 
 
 ## Reuse in I-4 and I-6
 
-Starting from a fresh Open for each workflow, set the block height to 7 mm while keeping its bottom at Z = 0. For the conversational edit, request “Make this block 7 mm tall. Keep the bottom at Z = 0 and keep the width and depth.” Both workflows should operate on the active indexed mesh. Expected physical extents are 20 × 10 × 7 mm. The top of the 3MF model should read 0.7 cm in its source unit. A height adjustment by moving the four shared top vertices preserves all 12 face IDs and the connectivity above.
+Starting from a fresh Open for each workflow, set the block height to 7 mm while keeping its bottom at Z = 0.
+
+For the manual edit, choose **Reshape Surface**, rotate until you can see the top, and click both top triangles. Both should be highlighted. Choose **Z**, enter **2 mm**, and click **Apply**. Check Height (Z) in the dimension controls. Pin it, then try another 1 mm Z offset. The alert should identify the pinned height, and the selected top should stay at 7 mm.
+
+To try the other tools, unpin the height. Choose **Extrude** with the same two top triangles selected and apply **2 mm**. Height should reach 9 mm with 12 vertices and 20 triangles. Choose **Move Point**, click near a top corner, and apply **−1 mm** along Z (type `-1`). Its measured Z coordinate should become 8 mm, while the other top corners stay at 9 mm.
+
+Run `Tests/run-manual-edit-checks.sh` to exercise the three operations and viewport geometry against all fixtures and a new block using the Swift interpreter.
+
+For the conversational edit, request “Make this block 7 mm tall. Keep the bottom at Z = 0 and keep the width and depth.” Both workflows should operate on the active indexed mesh. Expected physical extents are 20 × 10 × 7 mm. The top of the 3MF model should read 0.7 cm in its source unit. A height adjustment by moving the four shared top vertices preserves all 12 face IDs and the connectivity above.
 
 To check failure handling, open a valid block, adjust the view, then open a copy of the OBJ containing an out-of-range face index. The error should name the file and offending line. Dismiss it and verify the original block, units and camera position. Canceling the unit picker while opening a second block should also preserve the first.

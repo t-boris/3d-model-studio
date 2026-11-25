@@ -52,11 +52,19 @@ enum ManualMeshEdit {
             guard result.canAppendFaces(2 * patch.boundary.count) else {
                 throw MeshImportError("The mesh cannot allocate identifiers for the extrusion walls.")
             }
-            let rim = Set(patch.boundary.map(\.x))
+            // Keep the original corners needed by a wall or an unselected face.
+            // Only vertices used exclusively inside the cap can move in place.
+            let selectedPoints = mesh.cornerIndices(of: faces)
+            var retainOriginal = Set(patch.boundary.map(\.x))
+            for face in mesh.faces where !selection.contains(face.id) {
+                for corner in 0..<3 where selectedPoints.contains(face.vertices[corner]) {
+                    retainOriginal.insert(face.vertices[corner])
+                }
+            }
             var cap: [Int: Int] = [:]
-            for i in mesh.cornerIndices(of: faces).sorted() {
+            for i in selectedPoints.sorted() {
                 let position = try displaced(i, along: patch.normal)
-                if rim.contains(i) {
+                if retainOriginal.contains(i) {
                     cap[i] = result.vertices.count
                     result.vertices.append(position)
                 } else {
