@@ -79,3 +79,7 @@ I-3 implementation complete in faf6658, following specification commit db8881f. 
 ### Agent · 2026-11-25
 
 I-4 started on the I-3 workspace. The manual tool scope is recorded in REQ-004. Verification will exercise the same production edit and commit path on the new block and each of the three I-2 fixtures.
+
+### Agent · 2026-11-25
+
+I-4 implementation and interpreted checks completed in 0b4fdc3 and 9bc7ce9. The same workspace path moved a point, reshaped shared top vertices and extruded the selected patch on a new block, STL, OBJ and transformed 3MF. Tests checked SceneKit face picking and refreshed geometry, stable cap IDs, perimeter walls and pin conflicts. Application sources passed macOS 14 static type-checking. Building was disabled, so interactive app verification remains pending. The existing overview lifecycle edit is supervisor-reserved.
