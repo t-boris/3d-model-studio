@@ -101,9 +101,29 @@ struct ModelingInput: Encodable {
 }
 
 struct GeometryAccessReview: Identifiable {
+    struct Part: Identifiable {
+        let id: Int?
+        let label: String?
+        let faceIDs: [Int]
+    }
+
     let id = UUID()
-    let faceIDs: Set<Int>
+    let parts: [Part]
     let reason: String
+
+    var faceIDs: Set<Int> { Set(parts.flatMap(\.faceIDs)) }
+
+    init(faceIDs: Set<Int>, reason: String, assembly: ThreeMFAssembly?) {
+        let ids = faceIDs.sorted()
+        if let assembly {
+            parts = assembly.groupByOccurrence(ids).map { index, faces in
+                Part(id: index, label: index.map(assembly.occurrenceLabel), faceIDs: faces)
+            }.sorted { ($0.id ?? Int.max) < ($1.id ?? Int.max) }
+        } else {
+            parts = [Part(id: nil, label: nil, faceIDs: ids)]
+        }
+        self.reason = reason
+    }
 }
 
 // An indexed patch is a proposal. A later workspace transaction owns topology,
@@ -197,7 +217,7 @@ final class ModelingOperation {
         }
         requested.subtract(target.union(approved))
         guard !requested.isEmpty else { throw MeshImportError("There are no additional faces in that request.") }
-        review = GeometryAccessReview(faceIDs: requested, reason: reason)
+        review = GeometryAccessReview(faceIDs: requested, reason: reason, assembly: mesh.assembly)
     }
 
     func resolve(_ id: UUID, allow: Bool) throws {

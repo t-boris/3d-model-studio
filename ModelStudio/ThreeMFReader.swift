@@ -43,6 +43,41 @@ struct ThreeMFAssembly: Codable, Equatable {
     var objects: [ObjectID: Object] = [:]
     var occurrences: [Occurrence] = []
 
+    private var faceOwnership: [(range: Range<Int>, occurrence: Int)] {
+        occurrences.indices.flatMap { index in
+            let occurrence = occurrences[index]
+            return ([occurrence.importedFaceIDs] + (occurrence.addedFaceIDRanges ?? [])).map { ($0, index) }
+        }.sorted { $0.0.lowerBound < $1.0.lowerBound }
+    }
+
+    private func occurrenceIndex(for faceID: Int, in ownership: [(range: Range<Int>, occurrence: Int)]) -> Int? {
+        var lower = 0, upper = ownership.count
+        while lower < upper {
+            let middle = lower + (upper - lower) / 2
+            if ownership[middle].range.upperBound <= faceID { lower = middle + 1 } else { upper = middle }
+        }
+        guard lower < ownership.count, ownership[lower].range.contains(faceID) else { return nil }
+        return ownership[lower].occurrence
+    }
+
+    func groupByOccurrence(_ faceIDs: [Int]) -> [Int?: [Int]] {
+        let ownership = faceOwnership
+        return Dictionary(grouping: faceIDs) { occurrenceIndex(for: $0, in: ownership) }
+    }
+
+    func occurrenceLabel(at index: Int) -> String {
+        let occurrence = occurrences[index]
+        var labels = ["Build item \(occurrence.buildIndex + 1)"]
+        if !occurrence.componentIndices.isEmpty {
+            let path = occurrence.componentIndices.map { String($0 + 1) }.joined(separator: " › ")
+            labels.append("Component \(path)")
+        }
+        if let name = objects[occurrence.object]?.name, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            labels.insert(name, at: 0)
+        }
+        return labels.joined(separator: " · ")
+    }
+
     mutating func recordExtrusion(capFaceIDs: Set<Int>, wallFaceIDs: Range<Int>) throws {
         guard let first = capFaceIDs.first,
               let index = occurrences.firstIndex(where: { $0.contains(faceID: first) }),
@@ -60,20 +95,13 @@ struct ThreeMFAssembly: Codable, Equatable {
     mutating func recordPatch(original: EditableMesh, candidate: EditableMesh, changedFaces: Set<Int>,
                               selectedFaces: [Int]?) throws {
         guard !changedFaces.isEmpty else { return }
-        let ranges = occurrences.indices.flatMap { i in
-            ([occurrences[i].importedFaceIDs] + (occurrences[i].addedFaceIDRanges ?? [])).map { ($0, i) }
-        }.sorted { $0.0.lowerBound < $1.0.lowerBound }
+        let ownership = faceOwnership
 
         func owner(of face: Int) throws -> Int {
-            var lo = 0, hi = ranges.count
-            while lo < hi {
-                let mid = lo + (hi - lo) / 2
-                if ranges[mid].0.upperBound <= face { lo = mid + 1 } else { hi = mid }
-            }
-            guard lo < ranges.count, ranges[lo].0.contains(face) else {
+            guard let index = occurrenceIndex(for: face, in: ownership) else {
                 throw MeshImportError("A changed face has no 3MF occurrence mapping.")
             }
-            return ranges[lo].1
+            return index
         }
 
         let changed = candidate.faces.filter { changedFaces.contains($0.id) }

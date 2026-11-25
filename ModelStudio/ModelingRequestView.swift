@@ -55,36 +55,48 @@ struct ModelingRequestView: View {
                         .accessibilityLabel("Additional faces requested for read access")
                 }
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(review.parts) { part in
+                            VStack(alignment: .leading, spacing: 2) {
+                                if let label = part.label { Text(label).font(.subheadline) }
+                                Text("Faces \(faceList(part.faceIDs))")
+                            }
+                        }
                         Text(review.reason)
-                        Text("Faces " + review.faceIDs.sorted().map(String.init).joined(separator: ", "))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
-                }.frame(maxHeight: 80)
+                }.frame(maxHeight: 120)
                 Text("Approval grants read access to these faces for this request.")
                 HStack {
                     Button("Decline") { session.answer(review.id, allow: false) }
                     Button("Share Listed Faces") { session.answer(review.id, allow: true) }
                 }
             } else if let proposal = session.proposal {
-                if proposal.requiresConfirmation, let original = proposal.original, let impact = proposal.impact {
-                    Text("Changes outside the selection").font(.headline)
-                    Text("Orange shows changes outside your selection. Indigo shows affected selected faces.")
+                if let original = proposal.original, let impact = proposal.impact {
+                    if proposal.requiresConfirmation {
+                        Text("Changes outside the selection").font(.headline)
+                        Text("Orange shows faces outside your selection and new faces. Indigo shows affected selected faces.")
+                    }
                     let inside = impact.affected.subtracting(impact.outside)
                     HStack {
-                        reviewViewport("Original", mesh: original.mesh, highlight: impact.outside, inside: inside)
-                        reviewViewport("Proposed", mesh: proposal.preview.mesh, highlight: impact.outside, inside: inside)
+                        reviewViewport("Original", mesh: original.mesh, highlight: impact.outside.intersection(impact.originalFaces),
+                                       inside: inside.intersection(impact.originalFaces))
+                        reviewViewport("Proposed", mesh: proposal.preview.mesh, highlight: impact.outside.intersection(impact.candidateFaces),
+                                       inside: inside.intersection(impact.candidateFaces))
                     }
                 } else {
-                    reviewViewport("Proposed", mesh: proposal.preview.mesh, highlight: proposal.impact?.affected ?? [])
+                    reviewViewport("Proposed", mesh: proposal.preview.mesh, highlight: [])
                 }
                 ScrollView {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(session.message)
-                        if let outside = proposal.impact?.outside, !outside.isEmpty {
-                            Text("Outside face IDs · " + outside.sorted().map(String.init).joined(separator: ", "))
+                        if let impact = proposal.impact {
+                            if !impact.removed.isEmpty { Text("Removed faces · \(faceList(impact.removed.sorted()))") }
+                            if !impact.added.isEmpty { Text("Added faces · \(faceList(impact.added.sorted()))") }
+                            let changedOutside = impact.outside.intersection(impact.originalFaces).subtracting(impact.removed)
+                            if !changedOutside.isEmpty { Text("Changed unselected faces · \(faceList(changedOutside.sorted()))") }
                         }
+                        Text(session.message)
                         Text("Proposed dimensions").font(.headline)
                         ForEach(ModelDimension.allCases, id: \.self) { dimension in
                             let span = proposal.preview.extents[dimension.axis].formatted()
@@ -123,6 +135,10 @@ struct ModelingRequestView: View {
         }
         .padding(20).frame(width: 460)
         .onDisappear { session.cancel() }
+    }
+
+    private func faceList(_ ids: [Int]) -> String {
+        ids.map(String.init).joined(separator: ", ")
     }
 
     private func reviewViewport(_ title: String, mesh: EditableMesh, highlight: Set<Int>, inside: Set<Int> = []) -> some View {

@@ -80,7 +80,7 @@ final class ModelingSession: ObservableObject {
             if allow {
                 dispatch()
             } else {
-                finish("Access declined. The agent requested these faces for the following reason. \(review.reason) The request has ended.")
+                finish("Access declined. The request ended because the agent needed the listed faces. \(review.reason)")
             }
         } catch { finish(error.localizedDescription) }
     }

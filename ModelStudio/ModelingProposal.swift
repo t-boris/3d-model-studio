@@ -6,10 +6,17 @@ import simd
 struct SelectionImpact {
     let affected: Set<Int>
     let outside: Set<Int>
+    let removed: Set<Int>
+    let added: Set<Int>
+
+    var originalFaces: Set<Int> { affected.subtracting(added) }
+    var candidateFaces: Set<Int> { affected.subtracting(removed) }
 
     init(original: EditableMesh, proposed: EditableMesh, selection: Set<Int>) {
         let old = Dictionary(uniqueKeysWithValues: original.faces.map { ($0.id, $0.vertices) })
         let new = Dictionary(uniqueKeysWithValues: proposed.faces.map { ($0.id, $0.vertices) })
+        removed = Set(old.keys).subtracting(new.keys)
+        added = Set(new.keys).subtracting(old.keys)
         var affected = Set<Int>()
         var changedVertices = Set<Int>()
         var changedEdges = Set<SIMD2<Int>>()
@@ -25,7 +32,7 @@ struct SelectionImpact {
 
         // A face can retain every coordinate and corner yet gain or lose an
         // incident face. Track changes per vertex and oriented edge per face ID.
-        for id in Set(old.keys).union(new.keys) where old[id] != new[id] {
+        for id in Set(old.keys).union(added) where old[id] != new[id] {
             let edges = directedEdges(old[id]).symmetricDifference(directedEdges(new[id]))
             guard !edges.isEmpty else { continue } // Cyclic corner rotation.
             affected.insert(id)
