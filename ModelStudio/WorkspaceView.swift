@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 private struct OpenMeshKey: FocusedValueKey {
     typealias Value = () -> Void
@@ -40,22 +39,15 @@ struct WorkspaceCommands: Commands {
 }
 
 struct WorkspaceView: View {
-    @StateObject private var workspace = Workspace()
-    @State private var showingOpen = false
+    @ObservedObject var workspace: Workspace
     @State private var modelingSheet: ModelingSheet?
     @State private var showingPrintChecks = false
-    @State private var showingSave = false
-    @State private var savingFile: EditableModelFile?
-
     private var canOpen: Bool {
-        modelingSheet == nil && !showingPrintChecks && !showingOpen && !showingSave && !workspace.isReading && workspace.pendingUnits == nil
+        modelingSheet == nil && !showingPrintChecks && workspace.canStartFileOperation
     }
 
-    private func save() {
-        guard let model = workspace.activeModel else { return }
-        savingFile = EditableModelFile(model: model)
-        showingSave = true
-    }
+    private func open() { Task { await workspace.open() } }
+    private func save() { Task { await workspace.save() } }
 
     var body: some View {
         Group {
@@ -98,14 +90,14 @@ struct WorkspaceView: View {
         }
         .accessibilityIdentifier("modelViewport")
         .navigationTitle(workspace.activeModel?.name ?? "Untitled")
-        .focusedSceneValue(\.openMesh, canOpen ? { showingOpen = true } : nil)
+        .focusedSceneValue(\.openMesh, canOpen ? open : nil)
         .focusedSceneValue(\.saveModel, canOpen && workspace.activeModel != nil ? save : nil)
         .toolbar {
             ToolbarItem {
-                if workspace.isReading { ProgressView().controlSize(.small).accessibilityLabel("Reading mesh") }
+                if workspace.fileOperationInProgress { ProgressView().controlSize(.small).accessibilityLabel("Model file operation") }
             }
             ToolbarItem {
-                Button { showingOpen = true } label: { Label("Open…", systemImage: "folder") }
+                Button(action: open) { Label("Open…", systemImage: "folder") }
                     .disabled(!canOpen)
             }
             ToolbarItem {
@@ -114,22 +106,6 @@ struct WorkspaceView: View {
             }
             ToolbarItem(placement: .primaryAction) {
                 SettingsLink { Label("Settings", systemImage: "gearshape") }
-            }
-        }
-        .fileImporter(isPresented: $showingOpen, allowedContentTypes: [.studioModel] + ["stl", "obj", "3mf"].compactMap {
-            UTType(filenameExtension: $0)
-        }) { result in
-            switch result {
-            case .success(let url): Task { await workspace.open(url) }
-            case .failure(let error):
-                if (error as NSError).code != NSUserCancelledError { workspace.modelError = error.localizedDescription }
-            }
-        }
-        .fileExporter(isPresented: $showingSave, document: savingFile, contentType: .studioModel,
-                      defaultFilename: savingFile.map { ($0.model.name as NSString).deletingPathExtension }) { result in
-            savingFile = nil
-            if case .failure(let error) = result, (error as NSError).code != NSUserCancelledError {
-                workspace.modelError = error.localizedDescription
             }
         }
         .sheet(isPresented: $showingPrintChecks) {

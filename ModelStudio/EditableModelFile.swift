@@ -45,6 +45,14 @@ struct EditableModelFile: FileDocument {
                                          mesh: model.mesh, pins: model.pins))
     }
 
+    // The version-1 mesh includes its optional assembly inline. Older files
+    // without that field decode as standalone indexed meshes.
+    func write(to url: URL) throws {
+        let scope = url.startAccessingSecurityScopedResource()
+        defer { if scope { url.stopAccessingSecurityScopedResource() } }
+        try encoded().write(to: url, options: .atomic)
+    }
+
     static func read(_ url: URL) throws -> WorkspaceModel {
         let scope = url.startAccessingSecurityScopedResource()
         defer { if scope { url.stopAccessingSecurityScopedResource() } }

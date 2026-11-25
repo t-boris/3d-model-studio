@@ -16,7 +16,9 @@ Enter a nonnegative length and select µm, mm, cm, m, in, or ft. **Set Once** sc
 
 Each proposed span must fall within **±0.01 mm**, inclusive, of its target after conversion to millimeters. The same absolute tolerance applies to the current operation’s targets and every active pin. A conflict reports the dimension, target, and proposed measurement and leaves the geometry and pins intact.
 
-Use **Save Editable Model…** (Command-S) to write a `.studio3d` file. Use **Open…** (Command-O) to resume editing. The file stores the indexed mesh and face identities, model unit, and explicit pins with their target values and units.
+Use **Save Editable Model…** (Command-S) to write a `.studio3d` file. Use **Open…** (Command-O) to resume editing. The file stores the edited indexed mesh, face identities, model unit, and explicit pins with their target values and units. For imported 3MF assemblies, it also stores the object hierarchy, build placements and the occurrence that owns each edited face. You can reopen and edit the assembly without the original 3MF. Existing version-1 saves still open.
+
+Opening another model or quitting with unsaved edits offers **Save**, **Discard Changes**, and **Cancel**. Adding, changing or removing a pin counts as an edit. Save must finish before Open or Quit continues. If you discard and then cancel the picker or unit choice, or the replacement cannot open, your model and its edits stay in the workspace.
 
 ## Conversational modeling
 

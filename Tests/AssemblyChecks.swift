@@ -218,7 +218,7 @@ for file in ["bambu-blocks.3mf", "orca-blocks.3mf", "repeated-block.3mf"] {
 
 @MainActor
 func checkFailedReplacements() async throws {
-    let workspace = Workspace()
+    let workspace = Workspace(dialogs: ScriptedFileDialogs(choice: .discard))
     await workspace.open(assemblyDirectory.appendingPathComponent("repeated-block.3mf"))
     try workspace.applyManualEdit(.movePoint(0, axis: .height), basedOn: workspace.activeModel!,
                                   distance: 1, unit: .millimeter)

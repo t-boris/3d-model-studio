@@ -4,4 +4,4 @@ cd "$(dirname "$0")/.."
 cases=$(mktemp -d)
 trap 'rm -rf "$cases"' EXIT
 python3 Tests/assembly-errors.py "$cases"
-cat ModelStudio/{EditableMesh,PrintGeometry,ModelDimensions,STLReader,OBJReader,ThreeMFReader,ManualMeshEdit,EditableModelFile,Workspace,ModelingContext,ConversationDimensions,ModelingProposal,ModelViewport}.swift Tests/AssemblyChecks.swift | xcrun swift - "$cases"
+cat ModelStudio/{EditableMesh,PrintGeometry,ModelDimensions,STLReader,OBJReader,ThreeMFReader,ManualMeshEdit,EditableModelFile,WorkspaceFileDialogs,Workspace,ModelingContext,ConversationDimensions,ModelingProposal,ModelViewport}.swift Tests/ScriptedFileDialogs.swift Tests/AssemblyChecks.swift | xcrun swift - "$cases"

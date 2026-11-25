@@ -77,7 +77,7 @@ func checkReopen(source: String?, directory: URL) async throws {
     let saved = directory.appendingPathComponent("edited.studio3d")
     let bytes = try EditableModelFile(model: edited).encoded()
     try bytes.write(to: saved, options: .atomic)
-    let reopened = Workspace()
+    let reopened = Workspace(dialogs: ScriptedFileDialogs(choice: .discard))
     await reopened.open(saved)
     let restored = reopened.activeModel!
     precondition(restored.mesh == edited.mesh && restored.pins == edited.pins && restored.unit == edited.unit)

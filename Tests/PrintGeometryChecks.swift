@@ -83,7 +83,7 @@ private func checkPrintDefects() throws {
 // A topology-only edit can change the result even when every coordinate and dimension survives.
 @MainActor
 private func checkPrintInspection() async throws {
-    let workspace = Workspace()
+    let workspace = Workspace(dialogs: ScriptedFileDialogs(choice: .discard))
     workspace.newBlock()
     let original = workspace.activeModel!
     await workspace.validatePrintGeometry()
