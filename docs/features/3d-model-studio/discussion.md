@@ -199,3 +199,7 @@ I-7 is in progress. Existing version-1 files store indexed geometry, model units
 ### Agent · 2026-11-25
 
 I-7 is complete at da7cded. The workspace file suite passed for a historical v1 save and a newly saved repeated assembly with its source copy removed. The shared Open and Quit flow passed geometry and independent pin changes, successful saves, discard, cancellation and failed replacements. An interpreted AppKit harness exercised Cancel and Discard Changes through the native termination delegate. The assembly, dimension, manual/print and offline provider suites passed, and app sources type-checked for macOS 14 with warnings as errors. Build and deployment were disabled. The archive mappings for export are verified. Core 3MF export acceptance remains in I-8.
+
+### Agent · 2026-11-25
+
+I-8 is in progress. The saved assembly maps each edited face to a build item and component path. The workspace will use those mappings to write a single Core model part in millimeters and route export validation failures to the existing print inspector. Verification will cover destination preservation, source-independent reopen, repeated instances and the PrusaSlicer comparison.

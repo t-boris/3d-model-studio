@@ -7,6 +7,7 @@ enum UnsavedChangesChoice { case save, discard, cancel }
 protocol WorkspaceFileDialogs {
     func confirmChanges(modelName: String, quitting: Bool) -> UnsavedChangesChoice
     func saveDestination(modelName: String) throws -> URL?
+    func exportDestination(modelName: String) throws -> URL?
     func openSource() throws -> URL?
 }
 
@@ -31,6 +32,15 @@ struct MacWorkspaceFileDialogs: WorkspaceFileDialogs {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.studioModel]
         panel.nameFieldStringValue = (modelName as NSString).deletingPathExtension
+        return try selectedURL(in: panel)
+    }
+
+    func exportDestination(modelName: String) throws -> URL? {
+        let panel = NSSavePanel()
+        panel.title = "Export Core 3MF"
+        panel.prompt = "Export"
+        panel.allowedContentTypes = [UTType(filenameExtension: "3mf", conformingTo: .data)!]
+        panel.nameFieldStringValue = (modelName as NSString).deletingPathExtension + ".3mf"
         return try selectedURL(in: panel)
     }
 

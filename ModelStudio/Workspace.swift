@@ -50,6 +50,33 @@ final class Workspace: ObservableObject {
         printValidation = .current(report)
     }
 
+    enum ExportResult { case written, invalidGeometry, cancelled, failed }
+
+    func exportCore3MF() async -> ExportResult {
+        guard canStartFileOperation, let model = activeModel else { return .cancelled }
+        fileOperationInProgress = true
+        defer { fileOperationInProgress = false }
+        let previous = printValidation
+        printValidation = .checking(UUID())
+        do {
+            let export = try await Task.detached(priority: .userInitiated) { try CoreThreeMFExport(model: model) }.value
+            printValidation = .current(export.report)
+            guard !Task.isCancelled, let url = try dialogs.exportDestination(modelName: model.name) else { return .cancelled }
+            try await Task.detached(priority: .userInitiated) { try export.write(to: url) }.value
+            return .written
+        } catch let error as CoreThreeMFExport.InvalidGeometry {
+            printValidation = .current(error.report)
+            return .invalidGeometry
+        } catch {
+            if case .checking = printValidation {
+                if case .checking = previous { printValidation = .unchecked }
+                else { printValidation = previous }
+            }
+            modelError = error.localizedDescription
+            return .failed
+        }
+    }
+
     func save() async -> Bool {
         guard canStartFileOperation else { return false }
         fileOperationInProgress = true

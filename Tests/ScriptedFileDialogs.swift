@@ -20,6 +20,12 @@ final class ScriptedFileDialogs: WorkspaceFileDialogs {
         return destination
     }
 
+    func exportDestination(modelName: String) throws -> URL? {
+        events.append("export")
+        try onPick?()
+        return destination
+    }
+
     func openSource() throws -> URL? {
         events.append("open")
         try onPick?()

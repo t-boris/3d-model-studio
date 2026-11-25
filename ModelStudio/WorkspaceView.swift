@@ -8,7 +8,16 @@ private struct SaveModelKey: FocusedValueKey {
     typealias Value = () -> Void
 }
 
+private struct ExportModelKey: FocusedValueKey {
+    typealias Value = () -> Void
+}
+
 extension FocusedValues {
+    var exportModel: (() -> Void)? {
+        get { self[ExportModelKey.self] }
+        set { self[ExportModelKey.self] = newValue }
+    }
+
     var saveModel: (() -> Void)? {
         get { self[SaveModelKey.self] }
         set { self[SaveModelKey.self] = newValue }
@@ -24,6 +33,8 @@ struct WorkspaceCommands: Commands {
     @FocusedValue(\.openMesh) private var openMesh
     @FocusedValue(\.saveModel) private var saveModel
 
+    @FocusedValue(\.exportModel) private var exportModel
+
     var body: some Commands {
         CommandGroup(after: .newItem) {
             Button("Open…") { openMesh?() }
@@ -34,6 +45,8 @@ struct WorkspaceCommands: Commands {
             Button("Save Editable Model…") { saveModel?() }
                 .keyboardShortcut("s")
                 .disabled(saveModel == nil)
+            Button("Export Core 3MF…") { exportModel?() }
+                .disabled(exportModel == nil)
         }
     }
 }
@@ -48,6 +61,12 @@ struct WorkspaceView: View {
 
     private func open() { Task { await workspace.open() } }
     private func save() { Task { await workspace.save() } }
+
+    private func export() {
+        Task {
+            if await workspace.exportCore3MF() == .invalidGeometry { showingPrintChecks = true }
+        }
+    }
 
     var body: some View {
         Group {
@@ -92,6 +111,7 @@ struct WorkspaceView: View {
         .navigationTitle(workspace.activeModel?.name ?? "Untitled")
         .focusedSceneValue(\.openMesh, canOpen ? open : nil)
         .focusedSceneValue(\.saveModel, canOpen && workspace.activeModel != nil ? save : nil)
+        .focusedSceneValue(\.exportModel, canOpen && workspace.activeModel != nil ? export : nil)
         .toolbar {
             ToolbarItem {
                 if workspace.fileOperationInProgress { ProgressView().controlSize(.small).accessibilityLabel("Model file operation") }
@@ -103,6 +123,11 @@ struct WorkspaceView: View {
             ToolbarItem {
                 Button(action: save) { Label("Save Editable Model…", systemImage: "square.and.arrow.down") }
                     .disabled(!canOpen || workspace.activeModel == nil)
+            }
+            ToolbarItem {
+                Button(action: export) { Label("Export Core 3MF…", systemImage: "square.and.arrow.up") }
+                    .disabled(!canOpen || workspace.activeModel == nil)
+                    .accessibilityIdentifier("exportCore3MF")
             }
             ToolbarItem(placement: .primaryAction) {
                 SettingsLink { Label("Settings", systemImage: "gearshape") }

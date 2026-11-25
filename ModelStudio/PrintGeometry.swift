@@ -42,6 +42,8 @@ struct PrintGeometryReport {
     let issues: [Issue]
     var passed: Bool { issues.isEmpty }
 
+    init(issues: [Issue]) { self.issues = issues }
+
     init(mesh: EditableMesh) {
         struct EdgeUse {
             let face: Int
