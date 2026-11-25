@@ -63,3 +63,7 @@ I-1 implementation is complete on the feature branch. The `ModelStudio.xcodeproj
 ### Codex · 2026-11-25
 
 I-2 is in progress. All three file readers will produce the same indexed mesh. The open workflow will apply declared units and transforms, request missing units, and replace the active workspace only on success. I-4 and I-6 retain the manual and conversational acceptance checks.
+
+### Codex · 2026-11-25
+
+I-2 implementation and fixture handoff are complete. The workspace Open command and toolbar use the same transactional import path. All three blocks passed source-level checks of unit handling, transformed coordinates, indexed connectivity, face identity, SceneKit geometry and a model-layer height edit. Invalid input and a canceled unit choice retained the active edited mesh. I-4 and I-6 can reuse the 7 mm height edit in Fixtures/Import/README.md. Interactive camera gestures and end-user editing remain pending. Building was disabled. The pre-existing overview.md lifecycle change is excluded from the I-2 commits at the supervisor’s direction.
