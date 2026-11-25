@@ -50,9 +50,10 @@ struct ModelingRequestView: View {
             if let review = session.review {
                 Text("Share additional geometry?").font(.headline)
                 if let model = scope.model {
-                    ModelViewport(mesh: model.mesh, selectedFaces: review.faceIDs, selectedPoint: nil) { _, _ in }
+                    ModelViewport(mesh: model.mesh, selectedFaces: review.faceIDs, selectedPoint: nil,
+                                  affectedSelection: scope.target ?? []) { _, _ in }
                         .frame(height: 160)
-                        .accessibilityLabel("Additional faces requested for read access")
+                        .accessibilityLabel("Selected edit target and additional faces requested for read access")
                 }
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
@@ -67,7 +68,7 @@ struct ModelingRequestView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
                 }.frame(maxHeight: 120)
-                Text("Approval grants read access to these faces for this request.")
+                Text("Orange faces are requested for read access in this operation. Indigo faces are your edit target.")
                 HStack {
                     Button("Decline") { session.answer(review.id, allow: false) }
                     Button("Share Listed Faces") { session.answer(review.id, allow: true) }

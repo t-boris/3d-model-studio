@@ -195,35 +195,43 @@ private func exerciseAssemblySelection(_ provider: ModelingProvider, file: Strin
                                         .init(id: -3, vertices: [v.z,v.x,-1])], removedFaceIDs: [selected.id],
                                 requestedDimensions: [], unsupportedConstraints: []))
     }
-    func checkInput(sharing additional: [MeshFace]) async {
+    func checkInput(sharing additional: [MeshFace]) async throws {
         let input = await recorder.captured.last!
-        let visible = [selected] + additional
-        let vertices = Set(visible.flatMap { [$0.vertices.x, $0.vertices.y, $0.vertices.z] })
-        precondition(input.provider == provider && input.ids("faces") == visible.map(\.id).sorted())
-        precondition(input.ids("vertices") == vertices.sorted() && !input.raw.contains(model.name))
-        precondition(input.json["targetFaceIDs"] as? [Int] == [selected.id])
-        precondition(input.json["readOnlyFaceIDs"] as? [Int] == additional.map(\.id).sorted())
-        precondition(input.json["boundaryEdges"] as? [[Int]] == [[v.x,v.y], [v.y,v.z], [v.z,v.x]].map { $0.sorted() }
-            .sorted { $0.lexicographicallyPrecedes($1) })
-        precondition(input.json["assembly"] == nil && input.json["parts"] == nil)
+        let visible = ([selected] + additional).sorted { $0.id < $1.id }
+        let ids = Set(visible.flatMap { [$0.vertices.x, $0.vertices.y, $0.vertices.z] })
+        let vertices = ids.sorted().map { ModelingInput.Vertex(id: $0, position: mesh.vertices[$0]) }
+        let boundary = [[v.x,v.y], [v.y,v.z], [v.z,v.x]].map { $0.sorted() }.sorted { $0.lexicographicallyPrecedes($1) }
+        let expected: [String: Any] = [
+            "operation": "Edit Selected Faces", "instruction": instruction, "unit": model.unit.rawValue,
+            "clarifications": [], "appliedTurns": [], "targetFaceIDs": [selected.id],
+            "readOnlyFaceIDs": additional.map(\.id).sorted(), "boundaryEdges": boundary,
+            "faces": try JSONSerialization.jsonObject(with: JSONEncoder().encode(visible)),
+            "vertices": try JSONSerialization.jsonObject(with: JSONEncoder().encode(vertices))
+        ]
+        precondition(input.provider == provider && NSDictionary(dictionary: expected).isEqual(to: input.json))
+        precondition(!input.raw.contains(model.name) && !input.raw.contains("Locator block"))
     }
     func start(replies: [String]) async throws {
         await recorder.respond(replies)
         session.start(scope: .selection(workspace.activeModel!, [selected.id]), instruction: instruction, defaults: defaults)
         try await settle(session)
-        await checkInput(sharing: [])
+        try await checkInput(sharing: [])
     }
 
     try await start(replies: [request, more])
     let review = session.review!
     precondition(review.reason == reason && review.faceIDs == [sibling.id, across[0].id])
     precondition(review.parts.map(\.faceIDs) == [[sibling.id], [across[0].id]])
-    let labels = file == "repeated-block.3mf" ? ["Build item 1 · Component 1 › 1", "Build item 1 · Component 2 › 1"]
+    let labels = file == "repeated-block.3mf" ? ["Locator block · Build item 1 · Component 1 › 1", "Locator block · Build item 1 · Component 2 › 1"]
         : ["Build item 1 · Component 1", "Build item 2 · Component 1"]
     precondition(review.parts.compactMap(\.label) == labels)
+    let viewport = ModelViewport.Coordinator()
+    viewport.update(mesh: mesh, selection: review.faceIDs, point: nil, affectedSelection: [selected.id])
+    precondition(Set(viewport.faceGroups[1].map { mesh.faces[$0].id }) == review.faceIDs)
+    precondition(viewport.faceGroups[2].map { mesh.faces[$0].id } == [selected.id])
     session.answer(review.id, allow: true)
     try await settle(session)
-    await checkInput(sharing: [sibling, across[0]])
+    try await checkInput(sharing: [sibling, across[0]])
     let denied = session.review!
     let sentBeforeDecline = await recorder.captured.count
     session.answer(denied.id, allow: false)
@@ -252,7 +260,6 @@ private func exerciseAssemblySelection(_ provider: ModelingProvider, file: Strin
     precondition(candidate.preview.mesh != rejected.preview.mesh)
     precondition(!session.apply(to: workspace, confirmedProposal: rejected.id) && workspace.activeModel!.mesh == mesh)
 
-    let viewport = ModelViewport.Coordinator()
     for (surface, affected) in [(mesh, impact.originalFaces), (candidate.preview.mesh, impact.candidateFaces)] {
         let outside = affected.intersection(impact.outside)
         let inside = affected.subtracting(outside)
