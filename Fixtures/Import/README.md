@@ -27,3 +27,9 @@ For the conversational edit, choose **Ask Agent → Revise Entire Model…** and
 Run `Tests/run-provider-checks.sh` for the offline conversation matrix across all three configured agents and all three imports.
 
 To check failure handling, open a valid block, adjust the view, then open a copy of the OBJ containing an out-of-range face index. The error should name the file and offending line. Dismiss it and verify the original block, units and camera position. Canceling the unit picker while opening a second block should also preserve the first.
+
+## Selected-face review
+
+Open a fresh block, choose **Reshape Surface**, select the two top triangles and choose **Ask Agent → Edit Selected Faces…**. Ask to raise the top to a whole-model height of 7 mm by moving its four corners. For a proposal that moves those shared corners, the review should show the affected side triangles in orange and the affected selected top in indigo. Any earlier approval to share neighboring geometry applies only to reading it.
+
+Choose **Decline Edit** and verify the height remains 5 mm. Submit the same request again and review the new proposal. **Confirm Outside Changes** should apply a candidate that measures 7 mm and satisfies all active pins. To exercise rejection, start with a fresh import, pin its 5 mm height and confirm a proposal that raises it to 7 mm. The workspace should retain the original mesh and identify the pinned height conflict.

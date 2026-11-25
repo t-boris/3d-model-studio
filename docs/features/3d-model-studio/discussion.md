@@ -103,3 +103,7 @@ Managed I-6 implementation complete in 04a8e98. The interpreted provider harness
 ### Agent · 2026-11-25
 
 Managed I-7, selected-face edits, is in progress. Existing viewport picking and provider disclosure are in place. Remaining work covers the local comparison against the original full mesh, affected-region preview, proposal-specific edit confirmation and commit-time validation of requested and pinned dimensions. The edited implementation plan and overview remain reserved.
+
+### Agent · 2026-11-25
+
+Managed I-7, Review edits beyond selected faces, is complete at the implementation and offline verification level in 502fe64. Scripted replies through all three provider routes exercised scoped edits and outside-selection confirmation on a new block and all three imported blocks. The interpreted checks covered before/after SceneKit highlights, independent disclosure and edit decisions, decline, stale confirmation IDs, topology-only effects and atomic dimension rejection. The manual and dimension regression suites also passed. Build-disabled controls leave app launch and interactive review unverified. Live providers were not invoked. The implementation uses the existing indexed mesh, Swift collections and SceneKit. The two pre-existing plan and lifecycle edits remain reserved.
