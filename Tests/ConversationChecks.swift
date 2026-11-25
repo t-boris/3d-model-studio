@@ -133,7 +133,35 @@ private func exerciseConversation(_ provider: ModelingProvider, source: String?)
     try await prepare("Make it 0.9 cm tall", next)
     session.apply(to: workspace)
     precondition(abs(workspace.activeModel!.extents.z * factor - 9) < 1e-10)
-    print("\(provider.rawValue) · \(source ?? "creation and clarification"): revisions, viewport, units, pins and rejection passed")
+
+    let mesh = workspace.activeModel!.mesh
+    let face = mesh.faces[0], v = face.vertices
+    let edges = [SIMD2(v.x, v.y), SIMD2(v.y, v.z), SIMD2(v.z, v.x)].map { SIMD2(min($0.x, $0.y), max($0.x, $0.y)) }
+    func reviseWinding(_ corners: SIMD3<Int>) async throws {
+        let patch = AgentMeshPatch(vertices: [], faces: [.init(id: face.id, vertices: corners)], removedFaceIDs: [],
+                                   requestedDimensions: [], unsupportedConstraints: [])
+        try await prepare("Reverse the winding of the first face", try wire(patch))
+        precondition(session.apply(to: workspace), session.message)
+        precondition(workspace.printValidation.label == "Outdated · Run again")
+        await workspace.validatePrintGeometry()
+    }
+
+    await workspace.validatePrintGeometry()
+    precondition(workspace.printValidation.label == "Pass")
+    try await reviseWinding([v.x, v.z, v.y])
+    guard case .current(let report) = workspace.printValidation else { fatalError("Missing revision result") }
+    precondition(!report.passed && report.issues.count == 3 && Set(report.issues.compactMap(\.edge)) == Set(edges))
+    for issue in report.issues {
+        let edge = issue.edge!
+        let incident = mesh.faces.filter {
+            let c = [$0.vertices.x, $0.vertices.y, $0.vertices.z]
+            return c.contains(edge.x) && c.contains(edge.y)
+        }
+        precondition(issue.problem == .winding && issue.faces == incident.map(\.id))
+    }
+    try await reviseWinding(v)
+    precondition(workspace.printValidation.label == "Pass")
+    print("\(provider.rawValue) · \(source ?? "creation and clarification"): revisions, viewport, units, pins and winding failure/repair passed")
 }
 
 for provider in ModelingProvider.allCases {

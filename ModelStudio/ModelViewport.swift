@@ -38,12 +38,14 @@ struct ModelViewport: NSViewRepresentable {
     final class Coordinator {
         let surface = SCNNode()
         let wire = SCNNode()
+        let faceOutline = SCNNode()
         let edgeOverlay = SCNNode()
         var shownEdge: SIMD2<Int>?
         let marker = SCNNode(geometry: SCNSphere(radius: 0.028))
         var displayed: EditableMesh?
         var highlighted: Set<Int> = []
         var highlightedSelection: Set<Int> = []
+        private var showingIssueOutline = false
         var faceGroups: [[Int]] = []
         var positions: [SCNVector3] = []
         var vertexSource: SCNGeometrySource?
@@ -51,11 +53,13 @@ struct ModelViewport: NSViewRepresentable {
 
         init() {
             wire.categoryBitMask = 2
+            faceOutline.categoryBitMask = 2
+            faceOutline.renderingOrder = 2
             edgeOverlay.categoryBitMask = 2
-            edgeOverlay.renderingOrder = 2
+            edgeOverlay.renderingOrder = 3
             marker.categoryBitMask = 2
             wire.renderingOrder = 1
-            marker.renderingOrder = 3
+            marker.renderingOrder = 4
             marker.geometry?.firstMaterial?.diffuse.contents = NSColor.systemOrange
         }
 
@@ -97,7 +101,8 @@ struct ModelViewport: NSViewRepresentable {
                 displayed = mesh
             }
 
-            if changed || selection != highlighted || affectedSelection != highlightedSelection {
+            let selectionChanged = selection != highlighted
+            if changed || selectionChanged || affectedSelection != highlightedSelection {
                 // SceneKit returns an element and primitive index. Keep their
                 // mapping to mesh faces even when a selected face changes color.
                 let groups = Dictionary(grouping: mesh.faces.indices) { index -> Int in
@@ -126,6 +131,28 @@ struct ModelViewport: NSViewRepresentable {
                 highlightedSelection = affectedSelection
             }
 
+            if changed || selectionChanged || inspectingIssue != showingIssueOutline {
+                showingIssueOutline = inspectingIssue
+                faceOutline.geometry = nil
+                if inspectingIssue && !selection.isEmpty {
+                    // Filled triangles can be occluded or collapse to a line. Draw their
+                    // edges over the surface; the corner marker also locates a point collapse.
+                    let indices = mesh.faces.indices.filter { selection.contains(mesh.faces[$0].id) }.flatMap { index in
+                        let a = UInt32(index * 3), b = a + 1, c = a + 2
+                        return [a, b, b, c, c, a]
+                    }
+                    let lines = SCNGeometryElement(indices: indices, primitiveType: .line)
+                    let geometry = SCNGeometry(sources: [vertexSource!], elements: [lines])
+                    let ink = SCNMaterial()
+                    ink.lightingModel = .constant
+                    ink.diffuse.contents = NSColor.systemOrange
+                    ink.readsFromDepthBuffer = false
+                    ink.writesToDepthBuffer = false
+                    geometry.materials = [ink]
+                    faceOutline.geometry = geometry
+                }
+            }
+
             if changed || shownEdge != inspectionEdge {
                 shownEdge = inspectionEdge
                 edgeOverlay.geometry = nil
@@ -137,6 +164,7 @@ struct ModelViewport: NSViewRepresentable {
                     material.lightingModel = .constant
                     material.diffuse.contents = NSColor.systemPink
                     material.readsFromDepthBuffer = false
+                    material.writesToDepthBuffer = false
                     geometry.materials = [material]
                     edgeOverlay.geometry = geometry
                 }
@@ -169,7 +197,7 @@ struct ModelViewport: NSViewRepresentable {
         let view = PickingSceneView()
         let scene = SCNScene()
         let coordinator = context.coordinator
-        for node in [coordinator.surface, coordinator.wire, coordinator.edgeOverlay, coordinator.marker] {
+        for node in [coordinator.surface, coordinator.wire, coordinator.faceOutline, coordinator.edgeOverlay, coordinator.marker] {
             scene.rootNode.addChildNode(node)
         }
         view.scene = scene

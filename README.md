@@ -26,7 +26,7 @@ Review the proposed surface, measured spans and requested dimensions. **Apply to
 
 ## Print geometry checks
 
-Choose **Print Checks** below the viewport, then **Run Checks**. A failed result lists problems by face or edge. Select a problem to see its face IDs and suggested correction. The inspection viewport highlights the faces in orange, marks a corner, and draws the affected edge in pink when applicable. After a geometry edit, the workspace shows **Outdated · Run again** until you recheck. Pinning a dimension or rotating the view keeps the result current.
+Choose **Print Checks** below the viewport, then **Run Checks**. A failed result lists problems by face or edge. Select a problem to see its face IDs, suggested correction, and the build item and component path for a 3MF assembly. The viewport outlines affected faces in orange, marks a corner even when a triangle has collapsed to a point, and draws the affected edge in pink when applicable. After a geometry edit, the workspace shows **Outdated · Run again** until you recheck. Pinning a dimension or rotating the view keeps the result current.
 
 The checks use the mesh’s shared vertex indices and apply in every model unit.
 

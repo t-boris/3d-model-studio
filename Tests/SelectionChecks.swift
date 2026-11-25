@@ -262,7 +262,12 @@ private func exerciseAssemblySelection(_ provider: ModelingProvider, file: Strin
             precondition(Set(viewport.faceGroups[2].map { surface.faces[$0].id }) == [selected.id])
         }
     }
+    await workspace.validatePrintGeometry()
+    precondition(workspace.printValidation.label == "Pass")
     precondition(session.apply(to: workspace, confirmedProposal: candidate.id))
+    precondition(workspace.printValidation.label == "Outdated · Run again")
+    await workspace.validatePrintGeometry()
+    precondition(workspace.printValidation.label == "Pass")
     let edited = workspace.activeModel!.mesh
     let occurrence = edited.assembly!.occurrences[1]
     precondition(added.allSatisfy(occurrence.contains(faceID:)))
@@ -273,7 +278,50 @@ private func exerciseAssemblySelection(_ provider: ModelingProvider, file: Strin
     precondition(next.review?.parts.first?.label == labels[1])
     viewport.update(mesh: edited, selection: [], point: nil)
     precondition(viewport.displayed == candidate.preview.mesh)
-    print("\(provider.rawValue) · \(file): occurrence labels, exact disclosure, refusal, removed/added review and commit passed")
+
+    // Copy an added face so the report must resolve IDs through the edited occurrence mapping.
+    let copied = edited.faces.first { $0.id == added.min()! }!
+    let copyID = edited.nextFaceID
+    let copy = AgentMeshPatch(vertices: [], faces: [.init(id: -1, vertices: copied.vertices)], removedFaceIDs: [],
+                              requestedDimensions: [], unsupportedConstraints: [])
+    await recorder.respond([try wire(copy)])
+    session.start(scope: .selection(workspace.activeModel!, [copied.id]),
+                  instruction: "Add a copy of the selected triangle", defaults: defaults)
+    try await settle(session)
+    let duplicate = session.proposal!
+    precondition(!session.apply(to: workspace) && workspace.printValidation.label == "Pass")
+    precondition(session.apply(to: workspace, confirmedProposal: duplicate.id))
+    precondition(workspace.printValidation.label == "Outdated · Run again")
+    await workspace.validatePrintGeometry()
+    guard case .current(let report) = workspace.printValidation else { fatalError("Missing scoped edit result") }
+    precondition(!report.passed && report.issues.count == 4)
+    let broken = workspace.activeModel!.mesh
+    let c0 = copied.vertices.x, c1 = copied.vertices.y, c2 = copied.vertices.z
+    let expectedEdges = Set([SIMD2(c0, c1), SIMD2(c1, c2), SIMD2(c2, c0)].map { SIMD2(min($0.x, $0.y), max($0.x, $0.y)) })
+    precondition(Set(report.issues.compactMap(\.edge)) == expectedEdges)
+    for issue in report.issues {
+        precondition(issue.occurrenceLabels(in: broken) == [labels[1]])
+        if let edge = issue.edge {
+            let adjacent = broken.faces.filter {
+                let c = [$0.vertices.x, $0.vertices.y, $0.vertices.z]
+                return c.contains(edge.x) && c.contains(edge.y)
+            }
+            precondition(issue.problem == .nonManifold && issue.faces == adjacent.map(\.id) && issue.faces.count == 3)
+        } else {
+            precondition(issue.problem == .duplicate && issue.faces == [copied.id, copyID])
+        }
+    }
+    let remove = AgentMeshPatch(vertices: [], faces: [], removedFaceIDs: [copyID],
+                                requestedDimensions: [], unsupportedConstraints: [])
+    await recorder.respond([try wire(remove)])
+    session.start(scope: .selection(workspace.activeModel!, [copyID]),
+                  instruction: "Remove the duplicate triangle", defaults: defaults)
+    try await settle(session)
+    precondition(session.apply(to: workspace, confirmedProposal: session.proposal!.id))
+    precondition(workspace.printValidation.label == "Outdated · Run again")
+    await workspace.validatePrintGeometry()
+    precondition(workspace.printValidation.label == "Pass")
+    print("\(provider.rawValue) · \(file): scoped disclosure, confirmation and print failure/repair by occurrence passed")
 }
 
 try selectionTopologyChecks()

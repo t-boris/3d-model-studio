@@ -12,7 +12,7 @@ struct PrintGeometryReport {
 
         var guidance: String {
             switch self {
-            case .degenerate: "Move the corners apart to give this triangle area."
+            case .degenerate: "Move a corner out of line with the other two to give this triangle area. Rebuild the triangle if its corners share a vertex index."
             case .duplicate: "Keep one triangle for this set of corners."
             case .boundary: "Close the gap or join the adjoining faces along this edge."
             case .nonManifold: "Separate or remove extra faces so exactly two meet at this edge."
@@ -29,7 +29,13 @@ struct PrintGeometryReport {
 
         var location: String {
             if let edge { return "Edge \(edge.x)–\(edge.y)" }
+            if faces.count > 1 { return "\(faces.count) faces · first ID \(faces[0])" }
             return "Face \(faces[0])"
+        }
+
+        func occurrenceLabels(in mesh: EditableMesh) -> [String] {
+            guard let assembly = mesh.assembly else { return [] }
+            return assembly.groupByOccurrence(faces).keys.compactMap { $0 }.sorted().map(assembly.occurrenceLabel)
         }
     }
 

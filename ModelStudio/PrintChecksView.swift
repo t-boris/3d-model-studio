@@ -7,7 +7,7 @@ struct PrintChecksView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Print Geometry Checks").font(.title2)
-            Text("Checks triangle area, duplicate triangles, edge closure and shared-edge winding. A pass covers these checks only. Self-intersections, shell direction, wall thickness, printer settings and materials are outside their scope.")
+            Text("Checks triangle area, duplicate triangles, open and non-manifold edges, and winding across shared edges. A pass covers these checks only. Self-intersections, vertex-only contacts, shell direction, wall thickness, printer settings and materials are outside their scope.")
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Text(workspace.printValidation.label)
@@ -63,9 +63,12 @@ private struct PrintIssueInspector: View {
         }
         Text(issue.problem.guidance)
         ScrollView(.horizontal) {
-            Text("Highlighted face IDs · " + issue.faces.map(String.init).joined(separator: ", "))
-                .font(.caption.monospacedDigit())
-                .textSelection(.enabled)
+            VStack(alignment: .leading) {
+                ForEach(issue.occurrenceLabels(in: mesh), id: \.self) { Text($0) }
+                Text("Highlighted face IDs · " + issue.faces.map(String.init).joined(separator: ", "))
+            }
+            .font(.caption.monospacedDigit())
+            .textSelection(.enabled)
         }
     }
 }
