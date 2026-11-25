@@ -137,31 +137,44 @@ private func exerciseConversation(_ provider: ModelingProvider, source: String?)
     let mesh = workspace.activeModel!.mesh
     let face = mesh.faces[0], v = face.vertices
     let edges = [SIMD2(v.x, v.y), SIMD2(v.y, v.z), SIMD2(v.z, v.x)].map { SIMD2(min($0.x, $0.y), max($0.x, $0.y)) }
-    func reviseWinding(_ corners: SIMD3<Int>) async throws {
-        let patch = AgentMeshPatch(vertices: [], faces: [.init(id: face.id, vertices: corners)], removedFaceIDs: [],
+    func reviseForPrintCheck(_ instruction: String, faces: [ModelingInput.Face] = [], removed: [Int] = []) async throws {
+        let patch = AgentMeshPatch(vertices: [], faces: faces, removedFaceIDs: removed,
                                    requestedDimensions: [], unsupportedConstraints: [])
-        try await prepare("Reverse the winding of the first face", try wire(patch))
+        let priorResult = workspace.printValidation.label
+        try await prepare(instruction, try wire(patch))
+        precondition(workspace.printValidation.label == priorResult)
         precondition(session.apply(to: workspace), session.message)
         precondition(workspace.printValidation.label == "Outdated · Run again")
         await workspace.validatePrintGeometry()
     }
 
+    func checkEdgeIssues(_ expectedProblem: PrintGeometryReport.Problem, excluding excluded: Int? = nil) {
+        guard case .current(let report) = workspace.printValidation else { fatalError("Missing revision result") }
+        precondition(report.issues.count == 3 && Set(report.issues.compactMap(\.edge)) == Set(edges))
+        for issue in report.issues {
+            let edge = issue.edge!
+            let incident = mesh.faces.filter {
+                let c = [$0.vertices.x, $0.vertices.y, $0.vertices.z]
+                return $0.id != excluded && c.contains(edge.x) && c.contains(edge.y)
+            }
+            precondition(issue.problem == expectedProblem && issue.faces == incident.map(\.id))
+        }
+    }
+
     await workspace.validatePrintGeometry()
     precondition(workspace.printValidation.label == "Pass")
-    try await reviseWinding([v.x, v.z, v.y])
-    guard case .current(let report) = workspace.printValidation else { fatalError("Missing revision result") }
-    precondition(!report.passed && report.issues.count == 3 && Set(report.issues.compactMap(\.edge)) == Set(edges))
-    for issue in report.issues {
-        let edge = issue.edge!
-        let incident = mesh.faces.filter {
-            let c = [$0.vertices.x, $0.vertices.y, $0.vertices.z]
-            return c.contains(edge.x) && c.contains(edge.y)
-        }
-        precondition(issue.problem == .winding && issue.faces == incident.map(\.id))
-    }
-    try await reviseWinding(v)
+    try await reviseForPrintCheck("Reverse the winding of the first face", faces: [.init(id: face.id, vertices: [v.x, v.z, v.y])])
+    checkEdgeIssues(.winding)
+    try await reviseForPrintCheck("Restore the original winding", faces: [.init(id: face.id, vertices: v)])
     precondition(workspace.printValidation.label == "Pass")
-    print("\(provider.rawValue) · \(source ?? "creation and clarification"): revisions, viewport, units, pins and winding failure/repair passed")
+    try await reviseForPrintCheck("Open the surface at the first triangle", removed: [face.id])
+    checkEdgeIssues(.boundary, excluding: face.id)
+    try await reviseForPrintCheck("Close the triangular opening", faces: [.init(id: -1, vertices: v)])
+    precondition(workspace.printValidation.label == "Pass")
+    let repaired = workspace.activeModel!.mesh
+    precondition(repaired.faces.dropLast().elementsEqual(mesh.faces.dropFirst()))
+    precondition(repaired.faces.last?.id == mesh.nextFaceID)
+    print("\(provider.rawValue) · \(source ?? "creation and clarification"): revisions, viewport, units, pins, winding and open-edge failure/repair passed")
 }
 
 for provider in ModelingProvider.allCases {

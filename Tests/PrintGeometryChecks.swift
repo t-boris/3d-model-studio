@@ -16,7 +16,32 @@ private func checkIssueHighlight(_ issue: PrintGeometryReport.Issue, in mesh: Ed
     }
     precondition(endpoints == expected && outline.firstMaterial?.readsFromDepthBuffer == false)
     precondition(viewport.shownEdge == issue.edge)
-    precondition(viewport.edgeOverlay.geometry?.elements.first?.primitiveCount == issue.edge.map { _ in 1 })
+    if let edge = issue.edge {
+        let overlay = viewport.edgeOverlay.geometry!
+        let line = overlay.elements[0]
+        precondition(line.primitiveType == .line && line.primitiveCount == 1)
+        precondition(overlay.firstMaterial?.readsFromDepthBuffer == false)
+        let vertices = overlay.sources(for: .vertex)[0]
+        precondition(vertices.vectorCount == 2 && vertices.componentsPerVector == 3)
+        precondition(vertices.usesFloatComponents && vertices.bytesPerComponent == MemoryLayout<Float>.size)
+        let indices = line.data.withUnsafeBytes { Array($0.bindMemory(to: Int32.self)) }
+        precondition(indices == [0, 1])
+        let positions = vertices.data.withUnsafeBytes { bytes in
+            (0..<vertices.vectorCount).map { vertex in
+                let start = vertices.dataOffset + vertex * vertices.dataStride
+                return (0..<vertices.componentsPerVector).map { component in
+                    bytes.loadUnaligned(fromByteOffset: start + component * vertices.bytesPerComponent, as: Float.self)
+                }
+            }
+        }
+        let expectedPositions = [edge.x, edge.y].map { vertex in
+            let position = SIMD3<Float>(viewport.positions[vertex])
+            return [position.x, position.y, position.z]
+        }
+        precondition(positions == expectedPositions)
+    } else {
+        precondition(viewport.edgeOverlay.geometry == nil)
+    }
     precondition(!viewport.marker.isHidden && viewport.marker.geometry?.firstMaterial?.readsFromDepthBuffer == false)
     let marker = viewport.marker.position, expectedPoint = viewport.positions[issue.markerVertex]
     precondition(simd_distance(SIMD3<Float>(marker), SIMD3<Float>(expectedPoint)) < 1e-6)
