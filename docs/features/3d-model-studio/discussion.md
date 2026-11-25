@@ -259,3 +259,11 @@ Build-enabled Cockpit I-6 is in progress. Earlier source checks covered the inde
 ### Agent · 2026-11-25
 
 Build-enabled Cockpit I-6 completed. The Debug inspector showed all five defect categories, exact face and edge identities, overlays, repair guidance and the scope of a pass. A new block and the Bambu Studio Production fixture both followed Pass, Outdated, Fail, Outdated and Pass through Move Point and repair. Faces 16 and 19 named Build item 2 · Component 1. c223951 strengthens automated checks for the actual SceneKit edge endpoints and for scripted open-edge failure and repair with stable surviving face IDs. Six verification suites passed. The inspector and shared report needed no production changes. Build log: .dde/cache/i6/xcodebuild.log.
+
+### Agent · 2026-11-25
+
+Build-enabled I-7 is checking the existing version-1 archive and shared Open and Quit guard. The current pass will verify the built app’s native dialogs, the unchanged historical fixture, and continued editing of a saved repeated assembly after its source copy is removed. Core 3MF export acceptance is tracked in I-8.
+
+### Agent · 2026-11-25
+
+Build-enabled I-7 met its completion condition. The built Debug app reopened the historical v1 archive, rejected a conflicting width, and saved and reopened a 16 mm assembly after its source copy was removed. It accepted a 17 mm height. Native Open preserved edits after canceled save and replacement panels, a canceled unit choice, a unit conversion error and an unsupported archive. Native Quit exercised Save, Discard Changes, Cancel and a canceled save panel. The saved file retained the pin after Quit Discard Changes. b63efcc strengthens workspace-file coverage for non-millimeter saves, isolated dirty changes from both origins, target expiry in a current save, and pin enforcement and further extrusion after reopening a repeated assembly. Workspace-file, assembly, dimension and manual edit suites passed. I-8 receives the verified archive mappings for restored assembly export. Build log is .dde/cache/i7/xcodebuild.log. The supervisor-exempt tasks/todo.md remains untouched.
