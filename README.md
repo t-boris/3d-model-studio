@@ -1,6 +1,10 @@
 # 3D Model Studio
 
-3D Model Studio is a native macOS application with a SwiftUI interface for inspecting, creating, and editing 3D models.
+3D Model Studio is a native macOS application with a SwiftUI interface. The app opens an untitled workspace with an empty viewport and an entry point for Settings.
+
+## Run locally
+
+On macOS 14 or later, open `ModelStudio.xcodeproj` in Xcode and run the shared `ModelStudio` scheme. It builds `ModelStudio.app` with bundle identifier `com.github.t-boris.3d-model-studio`. Open Settings from the workspace toolbar or app menu, or press Command-Comma.
 
 ## v1 scope
 
