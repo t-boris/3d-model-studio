@@ -107,3 +107,7 @@ Managed I-7, selected-face edits, is in progress. Existing viewport picking and 
 ### Agent · 2026-11-25
 
 Managed I-7, Review edits beyond selected faces, is complete at the implementation and offline verification level in 502fe64. Scripted replies through all three provider routes exercised scoped edits and outside-selection confirmation on a new block and all three imported blocks. The interpreted checks covered before/after SceneKit highlights, independent disclosure and edit decisions, decline, stale confirmation IDs, topology-only effects and atomic dimension rejection. The manual and dimension regression suites also passed. Build-disabled controls leave app launch and interactive review unverified. Live providers were not invoked. The implementation uses the existing indexed mesh, Swift collections and SceneKit. The two pre-existing plan and lifecycle edits remain reserved.
+
+### Agent · 2026-11-25
+
+Approved I-8 in progress. Implement REQ-007 on the local indexed triangle mesh and expose its result in the workspace. REQ-009 now records the export obligation. The pre-approval DEC-006 explicitly leaves the format open, so the exporter and slicer acceptance remain blocked. The previously reserved plan and overview changes remain outside this step.
