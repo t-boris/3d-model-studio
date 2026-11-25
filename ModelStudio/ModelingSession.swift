@@ -108,6 +108,12 @@ final class ModelingSession: ObservableObject {
     private func dispatch() {
         guard let operation, let route else { return }
         do {
+            if let restatement = operation.dimensions.question {
+                question = restatement
+                message = restatement
+                return
+            }
+            _ = try operation.dimensions.targets()
             let input = try operation.input()
             busy = true
             message = "Waiting for \(route.provider.rawValue) · \(route.model)…"

@@ -69,6 +69,50 @@ try await checkAssembly("repeated-block.3mf", [([88, 55, 10], [98, 75, 15]),
                                               ([200, 0, 0], [220, 10, 5])])
 
 @MainActor
+func checkConversationalRemesh() async throws {
+    let workspace = Workspace()
+    await workspace.open(assemblyDirectory.appendingPathComponent("repeated-block.3mf"))
+    let original = workspace.activeModel!
+    let assembly = original.mesh.assembly!
+    let index = 1
+    let leaf = assembly.occurrences[index]
+    let face = original.mesh.faces.first { leaf.contains(faceID: $0.id) }!
+    let v = face.vertices
+    let center = (original.mesh.vertices[v.x] + original.mesh.vertices[v.y] + original.mesh.vertices[v.z]) / 3
+    let newVertex = ModelingInput.Vertex(id: -1, position: center)
+    let subdivision: [ModelingInput.Face] = [.init(id: -1, vertices: [v.z, v.x, -1]),
+                                             .init(id: face.id, vertices: [v.x, v.y, -1]),
+                                             .init(id: -2, vertices: [v.y, v.z, -1])]
+    let op = ModelingOperation(scope: .revision(original), instruction: "Subdivide the triangle")
+    func patch(_ faces: [ModelingInput.Face]) -> AgentMeshPatch {
+        AgentMeshPatch(vertices: [newVertex], faces: faces, removedFaceIDs: [], requestedDimensions: [], unsupportedConstraints: [])
+    }
+    let siblingVertex = assembly.occurrences[0].importedVertices.lowerBound
+    do {
+        _ = try ModelingProposal(operation: op, patch: patch(subdivision + [.init(id: -3, vertices: [v.x, siblingVertex, -1])]))
+        fatalError("Ambiguous occurrence ownership")
+    } catch {
+        precondition(error.localizedDescription.contains("occurrence"))
+        precondition(workspace.activeModel!.mesh == original.mesh)
+    }
+    try ModelingProposal(operation: op, patch: patch(subdivision)).apply(to: workspace)
+    let edited = workspace.activeModel!
+    let reopened = try EditableModelFile(data: EditableModelFile(model: edited).encoded()).model
+    precondition(reopened.mesh == edited.mesh)
+    let mapped = reopened.mesh.assembly!
+    precondition(mapped.objects == assembly.objects && mapped.buildItems == assembly.buildItems)
+    precondition(mapped.occurrences[0] == assembly.occurrences[0] && mapped.occurrences[2] == assembly.occurrences[2])
+    for added in original.mesh.nextFaceID..<edited.mesh.nextFaceID {
+        precondition(mapped.occurrences.filter { $0.contains(faceID: added) } == [mapped.occurrences[index]])
+    }
+    let siblings = original.mesh.faces.filter { !leaf.contains(faceID: $0.id) }
+    precondition(siblings == edited.mesh.faces.filter { !mapped.occurrences[index].contains(faceID: $0.id) })
+    precondition(edited.mesh.vertices.dropLast() == original.mesh.vertices[...])
+    print("Conversational subdivision preserved repeated occurrence ownership after reopening; a cross-occurrence addition was rejected.")
+}
+try await checkConversationalRemesh()
+
+@MainActor
 func checkManualAssembly(_ file: String) async throws {
     let workspace = Workspace()
     await workspace.open(assemblyDirectory.appendingPathComponent(file))

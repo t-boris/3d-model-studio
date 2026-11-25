@@ -78,7 +78,13 @@ private func exerciseSelectedEdits(_ provider: ModelingProvider, source: String?
 
     // The user's length still binds when the provider omits it. Confirmation
     // must check this after the preview and preserve the workspace on failure.
-    try await start([selected], "Make the height 31 mm", replies: [reply])
+    await recorder.respond([reply])
+    let ambiguous = "Make it 31 mm overall"
+    session.start(scope: .selection(workspace.activeModel!, [selected]), instruction: ambiguous, defaults: defaults)
+    precondition(session.question?.contains(ambiguous) == true && session.proposal == nil)
+    precondition(!session.apply(to: workspace, confirmedProposal: first.id))
+    session.clarify("final span along Z is 31 mm")
+    try await settle(session)
     let wrong = session.proposal!
     precondition(!session.apply(to: workspace, confirmedProposal: first.id))
     precondition(session.proposal?.id == wrong.id && wrong.impact?.outside == outside)
@@ -94,7 +100,11 @@ private func exerciseSelectedEdits(_ provider: ModelingProvider, source: String?
 
     workspace.unpin(.height)
     let height = original.extents.z * factor + 2
-    try await start([selected], "Make the height \(height) mm", replies: [reply])
+    await recorder.respond([reply])
+    session.start(scope: .selection(workspace.activeModel!, [selected]), instruction: "Raise it by 2 mm", defaults: defaults)
+    precondition(session.question != nil)
+    session.clarify("final span along Z is \(height) mm")
+    try await settle(session)
     let confirmed = session.proposal!
     precondition(session.apply(to: workspace, confirmedProposal: confirmed.id))
     let applied = workspace.activeModel!

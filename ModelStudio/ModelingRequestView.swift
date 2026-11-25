@@ -36,6 +36,8 @@ struct ModelingRequestView: View {
             } else {
                 Text("Describe the model you want to create.")
             }
+            Text("Specify whole-model dimensions in units, for example “\(ConversationDimensions.example)”. Use X for width, Y for depth and Z for height.")
+                .font(.caption).foregroundStyle(.secondary)
             if !session.submittedInstruction.isEmpty {
                 Text(session.submittedInstruction).foregroundStyle(.secondary).lineLimit(3).textSelection(.enabled)
             }

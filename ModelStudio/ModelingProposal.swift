@@ -61,7 +61,7 @@ struct ModelingProposal: Identifiable {
     let requested: [DimensionTarget]
 
     init(operation: ModelingOperation, patch: AgentMeshPatch) throws {
-        guard let constraints = patch.unsupportedConstraints, let dimensions = patch.requestedDimensions else {
+        guard let constraints = patch.unsupportedConstraints, patch.requestedDimensions != nil else {
             throw MeshImportError("The provider omitted its dimensional assessment. Request a new proposal.")
         }
         guard constraints.isEmpty else {
@@ -69,7 +69,7 @@ struct ModelingProposal: Identifiable {
         }
         let input = try operation.input()
         original = operation.scope.model
-        requested = try ConversationDimensions.targets(input: input, interpreted: dimensions, original: original)
+        requested = try operation.dimensions.targets()
         let mesh = try patch.applying(to: original?.mesh ?? EditableMesh(), visible: input)
         if let selection = operation.scope.target, let original {
             let impact = SelectionImpact(original: original.mesh, proposed: mesh, selection: selection)
@@ -172,6 +172,11 @@ private extension AgentMeshPatch {
             surfaceChanged = true
         }
         guard surfaceChanged else { throw MeshImportError("The proposal makes no surface change.") }
+        if var assembly = original.assembly {
+            try assembly.recordPatch(original: original, candidate: mesh, changedFaces: changed,
+                                     selectedFaces: visible.targetFaceIDs)
+            mesh.assembly = assembly
+        }
         return mesh
     }
 }

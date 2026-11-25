@@ -53,6 +53,91 @@ struct ThreeMFAssembly: Codable, Equatable {
         ranges.append(wallFaceIDs)
         occurrences[index].addedFaceIDRanges = ranges
     }
+
+    // Existing face IDs anchor each occurrence, including replacement triangles
+    // and walls from earlier edits. New triangles inherit ownership through
+    // shared vertex IDs. Coordinate equality cannot identify a repeated part.
+    mutating func recordPatch(original: EditableMesh, candidate: EditableMesh, changedFaces: Set<Int>,
+                              selectedFaces: [Int]?) throws {
+        guard !changedFaces.isEmpty else { return }
+        let ranges = occurrences.indices.flatMap { i in
+            ([occurrences[i].importedFaceIDs] + (occurrences[i].addedFaceIDRanges ?? [])).map { ($0, i) }
+        }.sorted { $0.0.lowerBound < $1.0.lowerBound }
+
+        func owner(of face: Int) throws -> Int {
+            var lo = 0, hi = ranges.count
+            while lo < hi {
+                let mid = lo + (hi - lo) / 2
+                if ranges[mid].0.upperBound <= face { lo = mid + 1 } else { hi = mid }
+            }
+            guard lo < ranges.count, ranges[lo].0.contains(face) else {
+                throw MeshImportError("A changed face has no 3MF occurrence mapping.")
+            }
+            return ranges[lo].1
+        }
+
+        let changed = candidate.faces.filter { changedFaces.contains($0.id) }
+        let vertices = Set(changed.flatMap { [$0.vertices.x, $0.vertices.y, $0.vertices.z] })
+        var anchors: [Int: Int] = [:]
+        func anchor(_ vertex: Int, to occurrence: Int) throws {
+            if let prior = anchors[vertex], prior != occurrence {
+                throw MeshImportError("The proposal joins vertices from different 3MF occurrences.")
+            }
+            anchors[vertex] = occurrence
+        }
+        for face in original.faces {
+            let corners = face.vertices
+            for i in 0..<3 where vertices.contains(corners[i]) {
+                try anchor(corners[i], to: owner(of: face.id))
+            }
+        }
+        var incident: [Int: [Int]] = [:]
+        let added = changed.filter { $0.id >= original.nextFaceID }
+        for face in changed where face.id < original.nextFaceID {
+            let index = try owner(of: face.id)
+            for i in 0..<3 { try anchor(face.vertices[i], to: index) }
+        }
+        for (index, face) in added.enumerated() {
+            for i in 0..<3 { incident[face.vertices[i], default: []].append(index) }
+        }
+
+        let fallback = try Set((selectedFaces ?? []).map(owner))
+        var visited = Set<Int>()
+        var additions: [Int: [Int]] = [:]
+        for start in added.indices where visited.insert(start).inserted {
+            var component = [start]
+            var owners = Set<Int>()
+            var cursor = 0
+            while cursor < component.count {
+                let face = added[component[cursor]]
+                cursor += 1
+                for i in 0..<3 {
+                    let vertex = face.vertices[i]
+                    if let index = anchors[vertex] { owners.insert(index) }
+                    for neighbor in incident.removeValue(forKey: vertex) ?? [] where visited.insert(neighbor).inserted {
+                        component.append(neighbor)
+                    }
+                }
+            }
+            if owners.isEmpty { owners = occurrences.count == 1 ? [0] : fallback }
+            guard owners.count == 1, let index = owners.first else {
+                throw MeshImportError("The added surface needs one identifiable 3MF occurrence. Select faces on its intended part.")
+            }
+            additions[index, default: []].append(contentsOf: component.map { added[$0].id })
+        }
+        for (index, ids) in additions {
+            var ranges = occurrences[index].addedFaceIDRanges ?? []
+            for id in ids.sorted() {
+                if let last = ranges.last, last.upperBound == id {
+                    ranges[ranges.count - 1] = last.lowerBound..<(id + 1)
+                } else {
+                    ranges.append(id..<(id + 1))
+                }
+            }
+            occurrences[index].addedFaceIDRanges = ranges
+        }
+    }
+
 }
 
 // 3MF stores three basis vectors followed by the origin. Translation is

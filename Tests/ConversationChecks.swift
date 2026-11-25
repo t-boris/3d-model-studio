@@ -13,10 +13,10 @@ private func wire(_ patch: AgentMeshPatch) throws -> String {
     return String(decoding: try JSONEncoder().encode(Reply(patch: patch)), as: UTF8.self)
 }
 
-private func creationReply() throws -> String {
+private func creationReply(spans: SIMD3<Double> = [20, 10, 5]) throws -> String {
     let block = try WorkspaceModel.newBlock()
     let vertices = block.mesh.vertices.enumerated().map { i, v in
-        ModelingInput.Vertex(id: -1 - i, position: v * [2, 1, 0.5])
+        ModelingInput.Vertex(id: -1 - i, position: (v / 10) * spans)
     }
     let faces = block.mesh.faces.map { f in
         ModelingInput.Face(id: -1 - f.id, vertices: SIMD3(repeating: -1) &- f.vertices)
@@ -73,7 +73,7 @@ private func exerciseConversation(_ provider: ModelingProvider, source: String?)
     let viewport = ModelViewport.Coordinator()
     viewport.update(mesh: original.mesh, selection: [], point: nil)
     let initialPositions = viewport.positions.map { $0.y }
-    let instruction = "Make this block 7 mm tall. Keep the bottom at Z = 0 and keep the width and depth."
+    let instruction = "Make this block 7 mm tall. The final span along X is 20 mm and a depth of 10 mm."
     let reply = try heightReply(original, 7, dimensions: [target(.height, 7), target(.width, 20), target(.depth, 10)])
     await transport.respond([reply])
     session.start(scope: .revision(original), instruction: instruction, defaults: defaults)
@@ -180,7 +180,7 @@ private func proposalChecks() async throws {
 private func literalChecks() throws {
     func targets(_ text: String) throws -> [DimensionTarget] {
         let operation = ModelingOperation(scope: .creation(draft: nil), instruction: text)
-        return try ConversationDimensions.targets(input: operation.input(), interpreted: [])
+        return try operation.dimensions.targets()
     }
     let spans = try targets("Make a 2x1x0.5 cm block.")
     precondition(spans == [target(.width, 2, .centimeter), target(.depth, 1, .centimeter), target(.height, 0.5, .centimeter)])
@@ -189,13 +189,97 @@ private func literalChecks() throws {
     let cube = try targets("Make a 1 1/2 inch cube.")
     precondition(cube == ModelDimension.allCases.map { target($0, 1.5, .inch) })
     do { _ = try targets("Set it to 7 cm"); fatalError("Unchecked length") }
-    catch { precondition(error.localizedDescription.contains("checkable span")) }
+    catch { precondition(error.localizedDescription.contains("Restate")) }
     do { _ = try targets("Make it 7 mm tall with a 3 mm bore."); fatalError("Unchecked second length") }
     catch { precondition(error.localizedDescription.contains("3 mm")) }
-    print("Explicit spans, compact dimensions, fractional inches and unassigned lengths checked.")
+    for text in ["height 7", "make it one inch across", "double its height", "make it at least 7 mm tall",
+                 "set width to 7 mm and width to 8 mm", "make the flange width 2 cm", "set height to 1/0 in",
+                 "move the selected corner one inch", "final span along Y is -3 mm"] {
+        do { _ = try targets(text); fatalError("Expected restatement for " + text) }
+        catch { precondition(error.localizedDescription.contains("Restate"), error.localizedDescription) }
+    }
+    for text in ["Give it a 30 degree angle", "set the wall thickness to 2 mm", "keep the bottom at Z = 0"] {
+        do { _ = try targets(text); fatalError("Unsupported constraint") }
+        catch { precondition(error.localizedDescription.contains("Unsupported dimensional constraint")) }
+    }
+    let all = ModelingOperation(scope: .creation(draft: nil), instruction: "Use the same size in all three dimensions")
+    all.clarify(question: all.dimensions.question!, answer: "final span along X is 3 mm")
+    precondition(all.dimensions.question?.contains("Depth (Y)") == true)
+    all.clarify(question: all.dimensions.question!, answer: "final span along Y is 3 mm and final span along Z is 3 mm")
+    let three = try all.dimensions.targets()
+    precondition(three == ModelDimension.allCases.map { target($0, 3) })
+    let relative = ModelingOperation(scope: .creation(draft: nil), instruction: "Create a block")
+    relative.clarify(question: "By how much should its height grow?", answer: "5 mm")
+    precondition(relative.dimensions.question != nil)
+    relative.clarify(question: relative.dimensions.question!, answer: "final span along Z is 8 mm")
+    let clarified = try relative.dimensions.targets()
+    precondition(clarified == [target(.height, 8)])
+    print("Explicit, relative, conflicting, unsupported and invalid spans, compact dimensions and fractional inches checked.")
+}
+
+@MainActor
+private func restatementChecks() async throws {
+    let workspace = Workspace()
+    let recorder = Recorder()
+    let session = ModelingSession(transport: recorder)
+    let instruction = "Create a 2 cm wide block."
+    let shapeQuestion = "What shape should it have?"
+    let ambiguous = "Use a box, allow 10 mm across and allow 10 mm overall."
+    let restateY = "final span along Y is 1 cm"
+    let restateZ = "final span along Z is 5 mm"
+    let patch = try creationReply()
+    guard case let .proposal(_, interpreted) = try ModelingReply(data: Data(patch.utf8)) else { fatalError() }
+    let operation = ModelingOperation(scope: .creation(draft: nil), instruction: instruction)
+    operation.clarify(question: shapeQuestion, answer: ambiguous)
+    // This candidate satisfies even its provider-supplied dimensions exactly.
+    // Direct construction must enforce the same unresolved-state guard as the UI.
+    do { _ = try ModelingProposal(operation: operation, patch: interpreted); fatalError("Unbound proposal") }
+    catch { precondition(error.localizedDescription.contains("10 mm across")) }
+
+    func request(_ spans: SIMD3<Double>) async throws {
+        let initialCount = await recorder.captured.count
+        await recorder.respond([#"{"kind":"question","message":"What shape should it have?"}"#, try creationReply(spans: spans)])
+        session.start(scope: .creation(draft: nil), instruction: instruction, defaults: defaults)
+        try await settle(session)
+        precondition(session.question == shapeQuestion)
+        session.clarify(ambiguous)
+        precondition(session.question?.contains("10 mm across") == true && session.proposal == nil)
+        session.clarify(restateY)
+        precondition(session.question?.contains("10 mm overall") == true && !session.apply(to: workspace))
+        session.clarify("yes")
+        precondition(session.question?.contains("10 mm overall") == true && workspace.activeModel == nil)
+        let waitingCount = await recorder.captured.count
+        precondition(waitingCount == initialCount + 1)
+        session.clarify(restateZ)
+        try await settle(session)
+        let input = await recorder.captured.last!.json
+        let answers = input["clarifications"] as! [[String: String]]
+        precondition(input["instruction"] as? String == instruction)
+        precondition(answers.compactMap { $0["answer"] } == [ambiguous, restateY, "yes", restateZ])
+    }
+    for axis in ModelDimension.allCases {
+        var spans = SIMD3<Double>(20, 10, 5)
+        spans[axis.axis] += 0.0101
+        try await request(spans)
+        precondition(session.proposal == nil && session.message.contains("Requested " + axis.label), session.message)
+        precondition(workspace.activeModel == nil)
+    }
+    try await request([20.01, 9.99, 5.01])
+    precondition(session.proposal?.requested == [target(.width, 2, .centimeter), target(.depth, 1, .centimeter), target(.height, 5)])
+    precondition(session.apply(to: workspace))
+    let created = workspace.activeModel!
+    // A provider-only value from this reply must neither bind nor resolve a target.
+    await recorder.respond([try heightReply(created, 8, dimensions: [target(.height, 99)])])
+    session.start(scope: .revision(created), instruction: "Double its height", defaults: defaults)
+    precondition(session.question?.contains("height") == true && session.proposal == nil)
+    session.clarify("final span along Z is 8 mm")
+    try await settle(session)
+    precondition(session.proposal?.requested == [target(.height, 8)] && session.apply(to: workspace))
+    print("Two equal unbound lengths, retained answers, provider-independent targets, three out-of-tolerance rejections and inclusive endpoints passed.")
 }
 
 try literalChecks()
+try await restatementChecks()
 try await proposalChecks()
 
 private struct FailingTransport: ProviderTransport {

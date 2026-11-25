@@ -149,6 +149,7 @@ enum ModelingReply {
 final class ModelingOperation {
     let scope: ModelingScope
     let instruction: String
+    private(set) var dimensions = ConversationDimensions()
     private let appliedTurns: [AppliedModelingTurn]
     private(set) var clarifications: [ModelingClarification] = []
     private var approved: Set<Int> = []
@@ -159,10 +160,12 @@ final class ModelingOperation {
         self.appliedTurns = scope.target == nil ? appliedTurns : []
         self.scope = scope
         self.instruction = instruction
+        dimensions.record(instruction)
     }
 
     func clarify(question: String, answer: String) {
         clarifications.append(ModelingClarification(question: question, answer: answer))
+        dimensions.record(answer, answering: question)
     }
 
     func input() throws -> ModelingInput {

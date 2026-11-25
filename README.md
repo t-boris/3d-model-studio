@@ -20,7 +20,7 @@ Use **Save Editable Model…** (Command-S) to write a `.studio3d` file. Use **Op
 
 ## Conversational modeling
 
-Choose **Create from Description…** in an empty workspace, or **Ask Agent → Revise Entire Model…** on an open model. Describe the shape or change. For example, ask for a block 2 cm wide and 1 cm deep. If the agent asks for the height, enter a value and unit and choose **Send Answer**.
+Choose **Create from Description…** in an empty workspace, or **Ask Agent → Revise Entire Model…** on an open model. Describe the shape or change. For example, ask for a block 2 cm wide and 1 cm deep. If the studio asks you to restate a dimension, name its final whole-model span and unit, for example “final span along X is 30 mm.” Choose **Send Answer** to continue the same request with your earlier answers.
 
 Review the proposed surface, measured spans and requested dimensions. **Apply to Model** updates the workspace and lets you continue the conversation on the edited geometry. **Discard** keeps the previous model. A conflicting pin or unsupported measurement appears in the sheet. Closing the sheet ends its conversation.
 

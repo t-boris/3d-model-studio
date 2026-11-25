@@ -79,6 +79,7 @@ struct ProviderRoute {
         Every patch must include both constraint arrays, even when empty. In requestedDimensions,
         list every requested or explicitly preserved whole-model span, e.g. {"dimension":"height","value":7,"unit":"millimeter"}.
         dimension is width (X), depth (Y) or height (Z). unit is micron, millimeter, centimeter, meter, inch or foot.
+        Follow user restatements such as “final span along X is 30 mm”. The app verifies user targets locally.
         Keep requested lengths in their explicit units. Convert coordinates to the input mesh unit.
         If a dimensional constraint (e.g. a hole diameter, angle or wall thickness) cannot be checked as one of
         those spans, return {"kind":"unsupported","message":"identify the constraint and explain why"}.
