@@ -91,3 +91,7 @@ Cockpit I-5 (agent integrations, currently numbered I-6 in the working plan) und
 ### Agent · 2026-11-25
 
 Cockpit I-5 / current plan's Agent integrations and model settings task: implemented and verified offline in 24c6341, 20a6575 and 45a1d7f. Settings routes to actual Codex CLI, Claude Code or the Google Antigravity SDK. Each route passed creation/draft, revision and selected-face payload checks. The local access review highlights and lists the specific requested triangles, explains the reason, and expires on completion, refusal, cancellation, errors or replacement. Provider-specific evidence and setup are in Providers/README.md. The interpreter exercised the production session and native process I/O using offline doubles; all dimension and manual editing regressions also passed. REQ-006 criteria for end-to-end conversational modeling remain open. Build, deployment, live credentials and agent execution were excluded. Earlier reserved plan and overview edits remain untouched.
+
+### Agent · 2026-11-25
+
+Managed I-6 (conversational creation and whole-model revision) is in progress. Clarifications will retain the operation’s description, answers, geometry and route. The studio will resolve indexed patches locally, review operation-specific dimensional targets, and publish through I-3. Selection proposal application remains a separate task. Verification will use scripted replies at the existing adapter boundary and all three I-2 imports.
