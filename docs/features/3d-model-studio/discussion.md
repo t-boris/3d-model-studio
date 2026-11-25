@@ -227,3 +227,11 @@ I-2 started from ff1b026. Direct edits now prepare and check the explicit displa
 ### Codex · 2026-11-25
 
 I-2 acceptance passed on Xcode 27.2 for the macOS arm64 Debug build of bc20e9f. Native controls exercised all three manual tools, dimension entry, target expiry, pin addition, change and removal, and a named height rejection. The manual, dimension and assembly suites passed, including inclusive numerical limits and sibling occurrence isolation. The workspace-file and offline provider suites passed regression checks. Build log is .dde/cache/i2/xcodebuild.log.
+
+### Agent · 2026-11-25
+
+I-3 is verifying clarification against empty and populated drafts and active revisions. Checks will compare the route, original instruction, prior answers and indexed surface across turns, then exercise unresolved targets, measured misses and current pins. BUG-001 remains open for the generated fix and re-verification against REQ-005, “The user can issue a conversational instruction referring to the selected faces.”
+
+### Agent · 2026-11-25
+
+I-3 completion condition met at 9d57ffa. ModelStudio 0.1.0 (1) built for arm64 macOS Debug with Xcode 27.2. The offline provider, dimension and assembly suites passed. New, STL, OBJ and Core 3MF models accepted repeated whole-model edits. Clarifications retained route, indexed surface, original instruction and prior answers. The application blocked unresolved targets, measured misses, unsupported constraints and current-pin conflicts. BUG-001 remains open for MarkView’s generated fix and re-verification under REQ-005’s criterion “The user can issue a conversational instruction referring to the selected faces.” Select two faces of a block and submit “Remove one of these faces”. It currently requests a span. It should send the scoped edit so the provider can propose a removal or ask which face. Build and suite logs are in .dde/cache/i3/. Live provider acceptance belongs to I-5.
