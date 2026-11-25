@@ -37,14 +37,20 @@ The checks use the mesh’s shared vertex indices and apply in every model unit.
 - Each edge between distinct vertex indices must have exactly two incident faces. One face indicates an open boundary. Three or more indicate a non-manifold edge.
 - The two faces sharing an edge must traverse it in opposite directions.
 
-A pass covers these triangle and edge checks. Self-intersections, vertex-only contacts, inward-facing shells, wall thickness, supports, printer settings and material behavior remain outside their scope. Editable save is available now. Slicer export to Core 3MF in millimeters is specified in DEC-010 and not yet implemented.
+A pass covers these triangle and edge checks. Self-intersections, vertex-only contacts, inward-facing shells, wall thickness, supports, printer settings and material behavior remain outside their scope.
+
+## Export for a slicer
+
+Choose **Export Core 3MF…** in the toolbar or File menu. The studio checks the current surface, prepares a millimeter 3MF and checks the geometry read back from that package. If a check fails, the print inspector highlights the affected faces and edges. Correct the model and export again. A passing export opens the destination picker and writes the checked package atomically.
+
+Edited assemblies keep their build placement and component hierarchy. Edits to one repeated occurrence travel with that occurrence, including after reopening an editable save. Exporting keeps any unsaved workspace changes marked for editable save. [Acceptance files, expected dimensions and PrusaSlicer comparison](Fixtures/Export/README.md)
 
 ## v1 scope
 
 - Open STL, OBJ, and 3MF models as editable geometry and inspect them in a 3D viewport.
 - Create models from descriptions and refine new or imported models through manual edits or conversation, including instructions targeting selected faces.
 - Use precise dimensional controls with explicit units and optional persistent dimensions, and check geometry for 3D printing.
-- Save editable models for later work. Planned slicer export writes Core 3MF in millimeters and must preserve physical dimensions.
+- Save editable models for later work and export validated Core 3MF in millimeters for slicing.
 - Use Codex, Claude, or Antigravity for conversational modeling. All three integrations are required in v1, with agent switching and model selection in Settings.
 
 Settings route modeling requests to Codex CLI, Claude Code, or Google's Antigravity SDK. Connect each agent in Settings to install its native runtime, check access to the selected model and save its API key in macOS Keychain. Modeling requests run in a fresh private workspace with operation-scoped geometry. Offline checks cover setup, retry and routing. Clean-Mac installation, Finder launch and live modeling with each provider remain release checks. [Provider setup, model choices and evidence](Providers/README.md)

@@ -1,0 +1,14 @@
+[created.3mf]
+size_x = 24.000000
+size_y = 12.000000
+size_z = 8.000000
+min_x = -12.000000
+min_y = -6.000000
+min_z = -4.000000
+max_x = 12.000000
+max_y = 6.000000
+max_z = 4.000000
+number_of_facets = 12
+manifold = yes
+number_of_parts =  1
+volume = 2304.000000
