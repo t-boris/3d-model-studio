@@ -279,3 +279,11 @@ Managed review fix evidence. The R1 parser still asks for a genuine ambiguous sp
 English renderings of the original Q-001 through Q-004 discussion answers follow. Q-001 asked who v1 was for and what they would do. The user chose all three audiences and uses. Q-002 asked which workflows were mandatory. The user chose both at limited scope: opening a model or creating one with AI, followed by manual and conversational edits. Q-003 asked what was mandatory for making physical parts. The user required exact dimensions and geometry checks for 3D printing. Q-004 asked which agents were mandatory. The user required Codex, Claude and Antigravity, with switching in Settings.
 
 English rendering of the original intake in SRC-001. The user wanted a relatively simple macOS viewer, editor and creator for 3D models. It should open common files and provide standard rotation and zoom. The user should be able to describe a new model to an AI agent, answer its questions, then ask it to refine or remove geometry. The user should also be able to extrude and reshape surfaces by hand, including lifting or lowering points, or select one or several surfaces and tell the agent what to change. Basic appearance was sufficient initially. The interface should be written in Swift, with an agent process behind it. The user named Antigravity, Codex and Claude as examples and wanted to choose the agent and model in Settings.
+
+### Codex · 2026-11-25
+
+The Cockpit supervisor approved ModelStudio 0.2.0 (2) for this feature update. The Xcode target now declares short version 0.2.0 and build 2 in both Debug and Release. Fresh bundle metadata verification is in progress.
+
+### Codex · 2026-11-25
+
+Version bump verified. Fresh Xcode 27.2 builds succeeded for arm64 Debug and universal arm64/x86_64 Release. Both generated app bundles report CFBundleShortVersionString 0.2.0 and CFBundleVersion 2. Build logs are .dde/cache/cockpit-version/xcodebuild-debug.log and .dde/cache/cockpit-version/xcodebuild-release.log. Release acceptance remains pending for clean-Mac installation, Finder launch and live provider operations. The PrusaSlicer GUI observations also remain pending.
