@@ -175,3 +175,11 @@ Current plan I-4 is in progress. The existing selection flow scopes the provider
 ### Agent · 2026-11-25
 
 Current plan I-4 is complete in a62f502. Interpreted provider checks passed on all 21 route and model combinations, including nine multipart cases. Tests verified exact selection disclosure, named occurrence review, operation expiry, separate confirmation for the displayed edit, mesh highlights, rejection paths and viewport changes. Assembly, dimension and manual/print checks passed, and macOS 14 sources type-checked with warnings as errors. BUG-001 records the unrelated parser false positive triggered by “Remove one of these faces.” Build-disabled controls leave interactive app review and authenticated providers pending. The pre-existing tasks/todo.md remains untouched at the supervisor’s direction.
+
+### Agent · 2026-11-25
+
+Current plan I-5 is in progress. Settings currently relies on Docker images and credentials inherited from the process that launched the app. The step is replacing both dependencies and will exercise the setup and production routes with local doubles. Clean-Mac installation, Finder launch and authenticated modeling remain release checks.
+
+### Agent · 2026-11-25
+
+Current plan I-5 source implementation is complete in 157d857. Settings provisions the native runtime for each provider, tests the chosen model with a geometry-free challenge, saves verified credentials in Keychain and offers retry, repair and disconnect. Tests/run-provider-checks.sh passed the installer and subprocess doubles for all three providers, including both Mac architecture layouts, all six model choices, credential and download failures, reconnect and selection isolation. The six vendor archives matched the packaged checksums and executable locations. The assembly, dimension and manual/print regressions and macOS 14 warnings-as-errors source type-check passed. No app was built or deployed. Clean-Mac installation, Finder launch, actual Keychain access, live authentication and a successful modeling operation per provider remain release evidence. The unrelated tasks/todo.md remains untouched at the supervisor’s direction.
