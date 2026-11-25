@@ -236,6 +236,10 @@ struct ConversationDimensions {
                 let literal = (measures as NSString).substring(with: value.range)
                 missing.append(Missing(wording: "\(literal) in “\(source)”", axis: nil))
             }
+        } else if values.first?.range == range(source), let question, let axis = answerAxis(for: question) {
+            // A bare quantity answering a direct span question still belongs to
+            // that axis when the user needs to restate it with a unit.
+            missing.append(Missing(wording: source, axis: axis))
         } else {
             missing.append(Missing(wording: source, axis: remainingAxes.first))
         }

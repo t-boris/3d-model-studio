@@ -303,6 +303,27 @@ private func restatementChecks() async throws {
     session.clarify("final span along Z is 8 mm")
     try await settle(session)
     precondition(session.proposal?.requested == [target(.height, 8)] && session.apply(to: workspace))
+
+    let revised = workspace.activeModel!
+    let heightQuestion = "What height should the block have?"
+    await recorder.respond([#"{"kind":"question","message":"What height should the block have?"}"#,
+                            try heightReply(revised, 9, dimensions: [target(.width, 20)])])
+    session.start(scope: .revision(revised), instruction: "Revise the block", defaults: defaults)
+    try await settle(session)
+    precondition(session.question == heightQuestion)
+    let beforeAnswer = await recorder.captured.count
+    session.clarify("9")
+    let pendingHeight = session.question
+    precondition(pendingHeight?.contains("span along Z") == true)
+    session.clarify("final span along X is 20 mm")
+    precondition(session.question == pendingHeight && !session.apply(to: workspace))
+    let stillWaiting = await recorder.captured.count
+    precondition(stillWaiting == beforeAnswer && workspace.activeModel!.mesh == revised.mesh)
+    session.clarify("final span along Z is 9 mm")
+    try await settle(session)
+    precondition(session.proposal?.requested == [target(.width, 20), target(.height, 9)])
+    precondition(session.apply(to: workspace))
+    precondition(workspace.activeModel!.extents.z == 9)
     print("Two equal unbound lengths, retained answers, provider-independent targets, three out-of-tolerance rejections and inclusive endpoints passed.")
 }
 

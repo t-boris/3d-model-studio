@@ -62,11 +62,23 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
     for scope in [ModelingScope.creation(draft: nil), .creation(draft: model), .revision(model)] {
         let create = #"{"kind":"proposal","message":"Create a triangle.","patch":{"vertices":[{"id":-1,"position":[0,2,0]},{"id":-2,"position":[0,0,0]},{"id":-3,"position":[1,0,0]}],"faces":[{"id":-1,"vertices":[-1,-2,-3]}],"removedFaceIDs":[],"requestedDimensions":[],"unsupportedConstraints":[]}}"#
         let revise = #"{"kind":"proposal","message":"Move the corner.","patch":{"vertices":[{"id":2,"position":[0,2,0]}],"faces":[],"removedFaceIDs":[],"requestedDimensions":[],"unsupportedConstraints":[]}}"#
-        await recorder.respond([scope.model == nil ? create : revise])
+        let shapeQuestion = "Which shape should the surface have?"
+        await recorder.respond([#"{"kind":"question","message":"Which shape should the surface have?"}"#,
+                                scope.model == nil ? create : revise])
         session.start(scope: scope, instruction: instruction, defaults: defaults)
         try await settle(session)
+        precondition(session.question == shapeQuestion)
+        let initial = await recorder.captured.last!
+        let other = ModelingProvider.allCases.first { $0 != provider }!
+        defaults.set(other.rawValue, forKey: ModelingProvider.preferencesKey)
+        session.clarify("Make it triangular")
+        try await settle(session)
+        defaults.set(provider.rawValue, forKey: ModelingProvider.preferencesKey)
         precondition(session.proposal?.preview.mesh.vertices[scope.model == nil ? 0 : 2] == [0,2,0])
         let call = await recorder.captured.last!
+        var expected = initial.json
+        expected["clarifications"] = [["question": shapeQuestion, "answer": "Make it triangular"]]
+        precondition(NSDictionary(dictionary: expected).isEqual(to: call.json))
         precondition(call.provider == provider && call.model == provider.models.last!)
         precondition(call.json["instruction"] as? String == instruction)
         precondition(call.json["operation"] as? String == scope.title)
