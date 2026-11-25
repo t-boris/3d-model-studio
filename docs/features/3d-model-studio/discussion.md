@@ -235,3 +235,11 @@ I-3 is verifying clarification against empty and populated drafts and active rev
 ### Agent · 2026-11-25
 
 I-3 completion condition met at 9d57ffa. ModelStudio 0.1.0 (1) built for arm64 macOS Debug with Xcode 27.2. The offline provider, dimension and assembly suites passed. New, STL, OBJ and Core 3MF models accepted repeated whole-model edits. Clarifications retained route, indexed surface, original instruction and prior answers. The application blocked unresolved targets, measured misses, unsupported constraints and current-pin conflicts. BUG-001 remains open for MarkView’s generated fix and re-verification under REQ-005’s criterion “The user can issue a conversational instruction referring to the selected faces.” Select two faces of a block and submit “Remove one of these faces”. It currently requests a span. It should send the scoped edit so the provider can propose a removal or ask which face. Build and suite logs are in .dde/cache/i3/. Live provider acceptance belongs to I-5.
+
+### Agent · 2026-11-25
+
+I-4 verification is in progress. The selection harness already covers the three scripted providers and multipart build paths. Its fixture expectations use unnamed occurrences and check geometry IDs. This pass will exercise named occurrences, compare the serialized geometry values, and check native face selection and instruction entry. BUG-001 remains assigned to generated fix and re-verification.
+
+### Agent · 2026-11-25
+
+I-4 completion condition met at 8e0925f. The native Debug build accepted selection of one and two triangles and submission of a two-face instruction. All 21 scripted provider and model combinations passed, including exact multipart disclosure, refusal, expiry, shared-point and topology review, stale and declined confirmation, dimensional conflicts and publication of the confirmed geometry. Manual edit, assembly, workspace-file and export suites passed with the named fixture. Build and test logs are in .dde/cache/i4/. BUG-001 remains open for the generated fix. Native reproduction and the expected result are recorded on the bug. Live authenticated provider operations remain with I-5.
