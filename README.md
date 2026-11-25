@@ -1,6 +1,6 @@
 # 3D Model Studio
 
-3D Model Studio is a native macOS application with a SwiftUI interface. Use Open (Command-O) to load an STL, OBJ, or Core 3MF mesh. Choose the source unit for STL and OBJ. The viewport displays the active mesh and its unit. Drag to rotate and scroll to zoom.
+3D Model Studio is a native macOS application with a SwiftUI interface. Use Open (Command-O) to load an STL, OBJ, Core 3MF, or multipart 3MF Production model. The importer places each build item and component in model space. Each occurrence can be edited independently. Choose the source unit for STL and OBJ. The viewport displays the active mesh and its unit. Drag to rotate and scroll to zoom.
 
 ## Run locally
 

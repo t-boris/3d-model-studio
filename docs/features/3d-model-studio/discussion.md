@@ -151,3 +151,7 @@ A. Read the dimensions from the PrusaSlicer command line (the --info output) in 
 Should v1 open 3MF files that use the 3MF Production extension, such as multi-part project files saved by Bambu Studio or Orca Slicer?
 
 B. Support the Production extension in v1. Read every referenced model part, apply its transforms and flatten all parts into one editable mesh. Add fixtures from Bambu Studio and Orca Slicer to the acceptance checks.
+
+### Agent · 2026-11-25
+
+Current plan I-1 is in progress. ThreeMFReader currently expands same-part Core components and rejects required extensions and cross-part paths. This step implements DEC-015 and DEC-016 for import, prepares multipart fixture evidence for REQ-002 and keeps I-7 replacement prompts and I-8 export in their assigned steps.

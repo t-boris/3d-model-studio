@@ -1,82 +1,272 @@
 import Foundation
 import simd
 
-enum ThreeMFReader {
-    private static let core = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
-    private static let modelRelation = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
-
-    static func read(_ url: URL) throws -> (EditableMesh, MeshUnit) {
-        let relationships = try xmlPart("_rels/.rels", from: url, limit: 1024 * 1024)
-        let links = relationships.elements(forLocalName: "Relationship",
-                                          uri: "http://schemas.openxmlformats.org/package/2006/relationships")
-        let start = links.filter { $0.value("Type") == modelRelation }
-        guard start.count == 1, start[0].value("TargetMode") != "External",
-              let target = start[0].value("Target")?.removingPercentEncoding else {
-            throw MeshImportError("The 3MF package needs one internal start model. Re-export it as Core 3MF.")
-        }
-        let path = target.hasPrefix("/") ? String(target.dropFirst()) : target
-        let segments = path.components(separatedBy: "/")
-        guard !segments.contains(where: { $0.isEmpty || $0 == "." || $0 == ".." }),
-              !path.hasPrefix("-"), path.rangeOfCharacter(from: CharacterSet(charactersIn: "*?[]\\")
-                .union(.controlCharacters)) == nil else {
-            throw MeshImportError("The 3MF start model has an unsupported part name. Re-export it with a simple model path.")
-        }
-        let root = try xmlPart(path, from: url, limit: 128 * 1024 * 1024)
-        guard root.localName == "model", root.uri == core else {
-            throw MeshImportError("The start part is not a Core 3MF model. Export a Core 3MF triangle mesh.")
-        }
-        guard (root.value("requiredextensions") ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw MeshImportError("This 3MF requires an extension. Export a flattened Core 3MF mesh.")
-        }
-        guard let unit = MeshUnit(rawValue: root.value("unit") ?? "millimeter") else {
-            throw MeshImportError("The 3MF model unit is unknown. Export with a standard 3MF length unit.")
-        }
-
-        let resources = try child("resources", of: root)
-        var objects: [Int: XMLElement] = [:]
-        for object in children("object", of: resources) {
-            let id = try object.integer("id")
-            guard id > 0, objects.updateValue(object, forKey: id) == nil else {
-                throw MeshImportError("3MF object IDs must be positive and unique. Repair the object list.")
-            }
-        }
-
-        var assembly = Assembly(objects: objects)
-        for item in children("item", of: try child("build", of: root)) {
-            try assembly.append(item, parent: matrix_identity_double4x4, ancestors: [])
-        }
-        return (assembly.mesh, unit)
+// Source identities are scoped to a package part. Build and component array
+// indices are the ordering in the source XML, including repeated references.
+struct ThreeMFAssembly: Codable, Equatable {
+    struct ObjectID: Codable, Hashable {
+        let part: String
+        let id: Int
     }
 
-    private struct Assembly {
+    struct Reference: Codable, Equatable {
+        let object: ObjectID
+        let transform: ThreeMFTransform
+        let uuid: String?
+    }
+
+    struct Object: Codable, Equatable {
+        let name: String?
+        let unit: MeshUnit
+        let components: [Reference]
+    }
+
+    struct Occurrence: Codable, Equatable {
+        let object: ObjectID
+        let buildIndex: Int
+        let componentIndices: [Int]
+        // Original source vertex/triangle order maps directly into these ranges.
+        // Face IDs remain meaningful after array reordering or face removal.
+        let importedVertices: Range<Int>
+        let importedFaceIDs: Range<Int>
+    }
+
+    let startPart: String
+    let buildItems: [Reference]
+    var objects: [ObjectID: Object] = [:]
+    var occurrences: [Occurrence] = []
+}
+
+// 3MF stores three basis vectors followed by the origin. Translation is
+// expressed in the referencing part's unit.
+struct ThreeMFTransform: Codable, Equatable {
+    let x, y, z, origin: SIMD3<Double>
+
+    init(_ raw: String?) throws {
+        if let raw {
+            let tokens = raw.split(whereSeparator: \.isWhitespace)
+            let numbers = tokens.compactMap { Double($0) }
+            guard tokens.count == 12, numbers.count == 12, numbers.allSatisfy(\.isFinite) else {
+                throw MeshImportError("A 3MF transform needs 12 finite numbers.")
+            }
+            x = SIMD3(numbers[0], numbers[1], numbers[2])
+            y = SIMD3(numbers[3], numbers[4], numbers[5])
+            z = SIMD3(numbers[6], numbers[7], numbers[8])
+            origin = SIMD3(numbers[9], numbers[10], numbers[11])
+        } else {
+            x = [1, 0, 0]
+            y = [0, 1, 0]
+            z = [0, 0, 1]
+            origin = .zero
+        }
+    }
+
+    func matrix(from child: MeshUnit, to parent: MeshUnit) -> simd_double4x4 {
+        let scale = child.millimetersPerUnit / parent.millimetersPerUnit
+        return simd_double4x4(columns: (SIMD4(x * scale, 0), SIMD4(y * scale, 0),
+                                        SIMD4(z * scale, 0), SIMD4(origin, 1)))
+    }
+}
+
+enum ThreeMFReader {
+    private static let core = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
+    private static let production = "http://schemas.microsoft.com/3dmanufacturing/production/2015/06"
+    private static let modelRelation = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
+    private static let relationships = "http://schemas.openxmlformats.org/package/2006/relationships"
+
+    static func read(_ url: URL) throws -> (EditableMesh, MeshUnit) {
+        let starts = try modelTargets("_rels/.rels", in: url, relativeTo: [])
+        guard starts.count == 1 else {
+            throw MeshImportError("The 3MF package needs one internal start model.")
+        }
+        let path = starts[0]
+        let root = try ModelPart(path: path, url: url, isStart: true)
+        let items = try children("item", of: child("build", of: root.element)).map {
+            try reference($0, in: path, isStart: true)
+        }
+        var expansion = Expansion(url: url, root: root,
+                                  assembly: ThreeMFAssembly(startPart: path, buildItems: items))
+        expansion.partCache.totalCostLimit = 128 * 1024 * 1024
+        for (index, item) in items.enumerated() {
+            try expansion.append(item, parent: matrix_identity_double4x4, parentUnit: root.unit,
+                                 build: index, components: [], ancestors: [])
+        }
+        expansion.mesh.assembly = expansion.assembly
+        return (expansion.mesh, root.unit)
+    }
+
+    private static func modelTargets(_ rels: String, in url: URL, relativeTo directory: [String]) throws -> [String] {
+        let (root, _) = try xmlPart(rels, from: url, limit: 1024 * 1024)
+        guard root.localName == "Relationships", root.uri == relationships else {
+            throw MeshImportError("Invalid 3MF relationships part \(rels).")
+        }
+        return try root.elements(forLocalName: "Relationship", uri: relationships)
+            .filter { $0.value("Type") == modelRelation }.map {
+                guard ($0.value("TargetMode") ?? "Internal") == "Internal" else {
+                    throw MeshImportError("External 3MF model relationship in \(rels). All model parts must be inside the package.")
+                }
+                return try packagePath($0.value("Target") ?? "", relativeTo: directory)
+            }
+    }
+
+    // Resolve only package member names. Never pass a URL, option, wildcard,
+    // encoded separator or ambiguous traversal component to unzip.
+    private static func packagePath(_ raw: String, relativeTo directory: [String]) throws -> String {
+        let absolute = raw.hasPrefix("/")
+        let path = absolute ? String(raw.dropFirst()) : raw
+        let forbidden = CharacterSet(charactersIn: ":*?[]\\#/%").union(.controlCharacters)
+        var components = absolute ? [] : directory
+        for component in path.components(separatedBy: "/") {
+            guard let decoded = component.removingPercentEncoding, !decoded.isEmpty,
+                  decoded.rangeOfCharacter(from: forbidden) == nil else {
+                throw MeshImportError("Invalid or external 3MF model-part path: \(raw).")
+            }
+            if decoded == "." || decoded == ".." {
+                // OPC relationships may use relative directory navigation.
+                guard !absolute, component == decoded else {
+                    throw MeshImportError("Invalid 3MF model-part path: \(raw).")
+                }
+                if decoded == ".." {
+                    guard !components.isEmpty else { throw MeshImportError("3MF path escapes the package: \(raw).") }
+                    components.removeLast()
+                }
+            } else {
+                components.append(decoded)
+            }
+        }
+        let member = components.joined(separator: "/")
+        guard !member.isEmpty, !member.hasPrefix("-") else {
+            throw MeshImportError("Invalid 3MF model-part path: \(raw).")
+        }
+        return member
+    }
+
+    private static func reference(_ element: XMLElement, in part: String, isStart: Bool) throws -> ThreeMFAssembly.Reference {
+        var target = part
+        let paths = element.attributes?.filter { $0.localName == "path" } ?? []
+        if let path = paths.first {
+            guard paths.count == 1, path.uri == production, isStart,
+                  let raw = path.stringValue, raw.hasPrefix("/") else {
+                throw MeshImportError("Invalid or external 3MF part reference in \(part). Use a Production path from the package root.")
+            }
+            target = try packagePath(raw, relativeTo: [])
+            guard target != part else { throw MeshImportError("Cyclic model-part reference to \(part).") }
+        }
+        let id = try element.integer("objectid")
+        guard id > 0 else { throw MeshImportError("Invalid 3MF object reference \(id) in \(part).") }
+        return try .init(object: .init(part: target, id: id), transform: ThreeMFTransform(element.value("transform")),
+                         uuid: element.attribute(forLocalName: "UUID", uri: production)?.stringValue)
+    }
+
+    private final class ModelPart {
+        let element: XMLElement
+        let unit: MeshUnit
         let objects: [Int: XMLElement]
+        let byteCount: Int
+
+        init(path: String, url: URL, isStart: Bool) throws {
+            let (root, bytes) = try xmlPart(path, from: url, limit: 128 * 1024 * 1024)
+            byteCount = bytes
+            guard root.localName == "model", root.uri == core else {
+                throw MeshImportError("Invalid model part \(path): expected a Core 3MF model.")
+            }
+            for prefix in (root.value("requiredextensions") ?? "").split(whereSeparator: \.isWhitespace) {
+                guard root.namespace(forPrefix: String(prefix))?.stringValue == production else {
+                    throw MeshImportError("Unsupported required 3MF extension '\(prefix)' in \(path).")
+                }
+            }
+            guard let unit = MeshUnit(rawValue: root.value("unit") ?? "millimeter") else {
+                throw MeshImportError("Unknown 3MF length unit in \(path).")
+            }
+            self.unit = unit
+            self.element = root
+            var objects: [Int: XMLElement] = [:]
+            for object in children("object", of: try child("resources", of: root)) {
+                let id = try object.integer("id")
+                guard id > 0, objects.updateValue(object, forKey: id) == nil else {
+                    throw MeshImportError("3MF object IDs must be positive and unique within \(path).")
+                }
+                if !isStart {
+                    for group in children("components", of: object) {
+                        for component in children("component", of: group)
+                            where component.attribute(forLocalName: "path", uri: production) != nil {
+                            throw MeshImportError("Invalid cross-part reference in child model \(path).")
+                        }
+                    }
+                }
+            }
+            self.objects = objects
+        }
+    }
+
+    private struct Expansion {
+        let url: URL
+        let root: ModelPart
+        // Child components can only refer within the same child part. Keep a
+        // bounded cache of parsed XML for repeated build items and components.
+        let partCache = NSCache<NSString, ModelPart>()
+        var assembly: ThreeMFAssembly
+        var relatedParts: Set<String>?
         var mesh = EditableMesh()
         var instances = 0
 
-        mutating func append(_ reference: XMLElement, parent: simd_double4x4, ancestors: Set<Int>) throws {
-            let id = try reference.integer("objectid")
-            guard let object = objects[id], !ancestors.contains(id) else {
-                throw MeshImportError("3MF object \(id) is missing or references itself. Repair or flatten the assembly.")
+        mutating func part(at path: String) throws -> ModelPart {
+            if path == assembly.startPart { return root }
+            if let cached = partCache.object(forKey: path as NSString) { return cached }
+            if relatedParts == nil {
+                var directory = assembly.startPart.components(separatedBy: "/")
+                let file = directory.removeLast()
+                let rels = (directory + ["_rels", file + ".rels"]).joined(separator: "/")
+                relatedParts = try Set(modelTargets(rels, in: url, relativeTo: directory))
             }
+            guard relatedParts?.contains(path) == true else {
+                throw MeshImportError("Missing 3MF model relationship from \(assembly.startPart) to \(path).")
+            }
+            let loaded = try ModelPart(path: path, url: url, isStart: false)
+            partCache.setObject(loaded, forKey: path as NSString, cost: loaded.byteCount)
+            return loaded
+        }
+
+        mutating func append(_ ref: ThreeMFAssembly.Reference, parent: simd_double4x4, parentUnit: MeshUnit,
+                             build: Int, components: [Int], ancestors: Set<ThreeMFAssembly.ObjectID>) throws {
+            let key = ref.object
+            let source = try part(at: key.part)
+            guard let object = source.objects[key.id] else {
+                throw MeshImportError("Missing 3MF object \(key.id) in \(key.part).")
+            }
+            guard !ancestors.contains(key) else { throw MeshImportError("Cyclic reference to object \(key.id) in \(key.part).") }
             instances += 1
             guard ancestors.count < 128, instances <= 100_000 else {
-                throw MeshImportError("The 3MF assembly is too complex. Export a smaller, flattened assembly.")
+                throw MeshImportError("The 3MF assembly exceeds the nesting or instance limit.")
             }
-            guard reference.attributes?.contains(where: { $0.localName == "path" }) != true else {
-                throw MeshImportError("This assembly references another model part. Export it as a single Core 3MF model.")
+            let world = parent * ref.transform.matrix(from: source.unit, to: parentUnit)
+            if assembly.objects[key] == nil {
+                let groups = children("components", of: object)
+                var references: [ThreeMFAssembly.Reference] = []
+                if !groups.isEmpty {
+                    guard groups.count == 1, children("mesh", of: object).isEmpty else {
+                        throw MeshImportError("Invalid components for 3MF object \(key.id) in \(key.part).")
+                    }
+                    references = try children("component", of: groups[0]).map {
+                        try reference($0, in: key.part, isStart: key.part == assembly.startPart)
+                    }
+                    guard !references.isEmpty else { throw MeshImportError("Empty 3MF components in \(key.part).") }
+                }
+                assembly.objects[key] = .init(name: object.value("name"), unit: source.unit, components: references)
             }
-            let world = try parent * transform(reference.value("transform"))
-            if let components = children("components", of: object).first {
-                guard children("mesh", of: object).isEmpty else {
-                    throw MeshImportError("3MF object \(id) has both a mesh and components. Re-export the assembly.")
-                }
-                let parts = children("component", of: components)
-                guard !parts.isEmpty else { throw MeshImportError("3MF object \(id) has no components. Repair the assembly.") }
-                for part in parts {
-                    try append(part, parent: world, ancestors: ancestors.union([id]))
-                }
-            } else {
+            let references = assembly.objects[key]!.components
+            if references.isEmpty {
+                let firstVertex = mesh.vertices.count
+                let firstFace = mesh.faces.count
                 try appendMesh(child("mesh", of: object), transform: world)
+                assembly.occurrences.append(.init(object: key, buildIndex: build, componentIndices: components,
+                                                   importedVertices: firstVertex..<mesh.vertices.count,
+                                                   importedFaceIDs: firstFace..<mesh.faces.count))
+            } else {
+                for (index, child) in references.enumerated() {
+                    try append(child, parent: world, parentUnit: source.unit, build: build,
+                               components: components + [index], ancestors: ancestors.union([key]))
+                }
             }
         }
 
@@ -109,18 +299,6 @@ enum ThreeMFReader {
         }
     }
 
-    private static func transform(_ raw: String?) throws -> simd_double4x4 {
-        guard let raw else { return matrix_identity_double4x4 }
-        let values = raw.split(whereSeparator: \.isWhitespace).map { Double($0) }
-        guard values.count == 12, values.allSatisfy({ $0?.isFinite == true }) else {
-            throw MeshImportError("A 3MF transform needs 12 finite numbers. Correct it or export with transforms applied.")
-        }
-        let m = values.compactMap { $0 }
-        // Transpose the file's row-vector matrix to SIMD column-vector convention.
-        return simd_double4x4(columns: (SIMD4(m[0], m[1], m[2], 0), SIMD4(m[3], m[4], m[5], 0),
-                                        SIMD4(m[6], m[7], m[8], 0), SIMD4(m[9], m[10], m[11], 1)))
-    }
-
     private static func children(_ name: String, of parent: XMLElement) -> [XMLElement] {
         parent.elements(forLocalName: name, uri: core)
     }
@@ -134,7 +312,7 @@ enum ThreeMFReader {
     }
 
     // Read only the requested package part to stdout. No archive member is written to disk.
-    private static func xmlPart(_ path: String, from url: URL, limit: Int) throws -> XMLElement {
+    private static func xmlPart(_ path: String, from url: URL, limit: Int) throws -> (XMLElement, Int) {
         let process = Process()
         let pipe = Pipe()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
@@ -165,7 +343,7 @@ enum ThreeMFReader {
             guard document.dtd == nil, let root = document.rootElement() else {
                 throw MeshImportError("Invalid 3MF XML.")
             }
-            return root
+            return (root, data.count)
         } catch {
             throw MeshImportError("Cannot read the XML in \(path). Repair the package or re-export it as Core 3MF.")
         }

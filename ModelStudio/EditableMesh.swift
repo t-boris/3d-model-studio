@@ -38,6 +38,7 @@ struct EditableMesh: Equatable, Codable {
     var vertices: [SIMD3<Double>] = []
     private(set) var faces: [MeshFace] = []
     private var nextFaceID = 0
+    var assembly: ThreeMFAssembly?
 
     mutating func addFace(_ a: Int, _ b: Int, _ c: Int) {
         faces.append(MeshFace(id: nextFaceID, vertices: SIMD3(a, b, c)))
