@@ -1,0 +1,403 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		27F1A919E74EA13E5F417296 /* StudioSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE7C15A7743CB087F3DAA8C /* StudioSettingsView.swift */; };
+		A4F32A5A50FB4F0F9FD3C328 /* ModelingRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B75028F5F6F4492281F2AFFE /* ModelingRequestView.swift */; };
+		F17086C28EC84B99B19FF96F /* ModelingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1950424F2D0D4490BD21105F /* ModelingSession.swift */; };
+		C49A2209ED3A4B8BB3232FFD /* ModelingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD0600F7A524D50A70AD824 /* ModelingProvider.swift */; };
+		D8C3174D4322419DAEEEB9A0 /* ModelingContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB68A66D7D1B4764BE7D6214 /* ModelingContext.swift */; };
+		358CB03C16D145EBA6B17FC6 /* ConversationDimensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4134E3D5967449E87C45A1B /* ConversationDimensions.swift */; };
+		3F9AE8DD695C4BB9A463278C /* ModelingProposal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4737E21E3A427A848AD5A5 /* ModelingProposal.swift */; };
+		3C9264AE99EC78244BD91D55 /* ModelStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00262AD6880714E663FD8184 /* ModelStudioApp.swift */; };
+		71063C2E38EE41F79264E2B9 /* EditableMesh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15A66DBABCEA43DB857C2169 /* EditableMesh.swift */; };
+		99CCFEDFDEA74300B3FCEA5A /* PrintChecksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E1D7C5297974B909BCB0F34 /* PrintChecksView.swift */; };
+		74B63E4ECC6A4D01A34499E1 /* PrintGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 374F900ED84D496AA9283B87 /* PrintGeometry.swift */; };
+		B3B4A6F4C72F4986B6CFE514 /* DimensionControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */; };
+		9C2C92DDB6DA469591E32747 /* EditableModelFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127BCA5384464AEBBB4A680C /* EditableModelFile.swift */; };
+		06E0A3EA399446B994AC0757 /* WorkspaceFileDialogs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B45646112740F381959709 /* WorkspaceFileDialogs.swift */; };
+		5CE88B6E061A49998FB79649 /* ModelDimensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D63943A75A104E1DA7E99EF6 /* ModelDimensions.swift */; };
+		A1EE9DF88D9E496B9AE651A3 /* ManualEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5148DB409095444EB018BE34 /* ManualEditorView.swift */; };
+		1550E4FB916A4D8BB171B6B8 /* ManualMeshEdit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A70DC5BE5734E39AF24657B /* ManualMeshEdit.swift */; };
+		DDD1CB1AE0F04E8EAA079772 /* ModelViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951A40625E5149BAAF055486 /* ModelViewport.swift */; };
+		5CF9D484212B4957BB97A74D /* OBJReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670467B3432546118C3EFCC6 /* OBJReader.swift */; };
+		E2B061EC96734365873BF9A1 /* STLReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C0B61510DF4D7A8204C097 /* STLReader.swift */; };
+		6476816AB2754FA38E18B5D3 /* ThreeMFReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C9E0221B4F46599175E9F0 /* ThreeMFReader.swift */; };
+		9841C995684E470D849C4EE9 /* CoreThreeMFExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B501217EA44A48338982092F /* CoreThreeMFExport.swift */; };
+		91D75DE06654D6C4CC31C32C /* WorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28506277DD10666B42F6DF9 /* WorkspaceView.swift */; };
+		7ACEC0D48C7A406C99BDB9A8 /* Workspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = E490A5F5047A4ACE8087B720 /* Workspace.swift */; };
+		C4EB806924AC49C49C7071F4 /* ProviderRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705FA9235CC648FD81A902DF /* ProviderRuntime.swift */; };
+		E85FA83380A8409B980BC4C4 /* ProviderConnections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20DE04F1335B4215A120F972 /* ProviderConnections.swift */; };
+		3B369ACB8FD1445DB4705845 /* Runtime in Resources */ = {isa = PBXBuildFile; fileRef = 4BE391211F8C46368E7D211C /* Runtime */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		00262AD6880714E663FD8184 /* ModelStudioApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStudioApp.swift; sourceTree = "<group>"; };
+		5AE7C15A7743CB087F3DAA8C /* StudioSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioSettingsView.swift; sourceTree = "<group>"; };
+		B75028F5F6F4492281F2AFFE /* ModelingRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingRequestView.swift; sourceTree = "<group>"; };
+		1950424F2D0D4490BD21105F /* ModelingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingSession.swift; sourceTree = "<group>"; };
+		CCD0600F7A524D50A70AD824 /* ModelingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingProvider.swift; sourceTree = "<group>"; };
+		BB68A66D7D1B4764BE7D6214 /* ModelingContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingContext.swift; sourceTree = "<group>"; };
+		A4134E3D5967449E87C45A1B /* ConversationDimensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationDimensions.swift; sourceTree = "<group>"; };
+		2F4737E21E3A427A848AD5A5 /* ModelingProposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingProposal.swift; sourceTree = "<group>"; };
+		15A66DBABCEA43DB857C2169 /* EditableMesh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableMesh.swift; sourceTree = "<group>"; };
+		2E1D7C5297974B909BCB0F34 /* PrintChecksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintChecksView.swift; sourceTree = "<group>"; };
+		374F900ED84D496AA9283B87 /* PrintGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintGeometry.swift; sourceTree = "<group>"; };
+		0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionControls.swift; sourceTree = "<group>"; };
+		127BCA5384464AEBBB4A680C /* EditableModelFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableModelFile.swift; sourceTree = "<group>"; };
+		74B45646112740F381959709 /* WorkspaceFileDialogs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceFileDialogs.swift; sourceTree = "<group>"; };
+		D63943A75A104E1DA7E99EF6 /* ModelDimensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDimensions.swift; sourceTree = "<group>"; };
+		5148DB409095444EB018BE34 /* ManualEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualEditorView.swift; sourceTree = "<group>"; };
+		2A70DC5BE5734E39AF24657B /* ManualMeshEdit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualMeshEdit.swift; sourceTree = "<group>"; };
+		951A40625E5149BAAF055486 /* ModelViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelViewport.swift; sourceTree = "<group>"; };
+		670467B3432546118C3EFCC6 /* OBJReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBJReader.swift; sourceTree = "<group>"; };
+		31C0B61510DF4D7A8204C097 /* STLReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STLReader.swift; sourceTree = "<group>"; };
+		D7C9E0221B4F46599175E9F0 /* ThreeMFReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeMFReader.swift; sourceTree = "<group>"; };
+		B501217EA44A48338982092F /* CoreThreeMFExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreThreeMFExport.swift; sourceTree = "<group>"; };
+		A28506277DD10666B42F6DF9 /* WorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceView.swift; sourceTree = "<group>"; };
+		E490A5F5047A4ACE8087B720 /* Workspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Workspace.swift; sourceTree = "<group>"; };
+		E0D0F3972CF84FCACAB69A28 /* ModelStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ModelStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		705FA9235CC648FD81A902DF /* ProviderRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderRuntime.swift; sourceTree = "<group>"; };
+		20DE04F1335B4215A120F972 /* ProviderConnections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConnections.swift; sourceTree = "<group>"; };
+		4BE391211F8C46368E7D211C /* Runtime */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Runtime; path = Providers/Runtime; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		E3D23FC60D4DC8AFC7FB1238 /* ModelStudio */ = {
+			isa = PBXGroup;
+			children = (
+				00262AD6880714E663FD8184 /* ModelStudioApp.swift */,
+				5AE7C15A7743CB087F3DAA8C /* StudioSettingsView.swift */,
+				B75028F5F6F4492281F2AFFE /* ModelingRequestView.swift */,
+				1950424F2D0D4490BD21105F /* ModelingSession.swift */,
+				CCD0600F7A524D50A70AD824 /* ModelingProvider.swift */,
+				20DE04F1335B4215A120F972 /* ProviderConnections.swift */,
+				705FA9235CC648FD81A902DF /* ProviderRuntime.swift */,
+				BB68A66D7D1B4764BE7D6214 /* ModelingContext.swift */,
+				A4134E3D5967449E87C45A1B /* ConversationDimensions.swift */,
+				2F4737E21E3A427A848AD5A5 /* ModelingProposal.swift */,
+				15A66DBABCEA43DB857C2169 /* EditableMesh.swift */,
+				2E1D7C5297974B909BCB0F34 /* PrintChecksView.swift */,
+				374F900ED84D496AA9283B87 /* PrintGeometry.swift */,
+				0E0D3A4C8C0944D29A46E8B2 /* DimensionControls.swift */,
+				127BCA5384464AEBBB4A680C /* EditableModelFile.swift */,
+				74B45646112740F381959709 /* WorkspaceFileDialogs.swift */,
+				D63943A75A104E1DA7E99EF6 /* ModelDimensions.swift */,
+				5148DB409095444EB018BE34 /* ManualEditorView.swift */,
+				2A70DC5BE5734E39AF24657B /* ManualMeshEdit.swift */,
+				951A40625E5149BAAF055486 /* ModelViewport.swift */,
+				670467B3432546118C3EFCC6 /* OBJReader.swift */,
+				31C0B61510DF4D7A8204C097 /* STLReader.swift */,
+				D7C9E0221B4F46599175E9F0 /* ThreeMFReader.swift */,
+				B501217EA44A48338982092F /* CoreThreeMFExport.swift */,
+				A28506277DD10666B42F6DF9 /* WorkspaceView.swift */,
+				E490A5F5047A4ACE8087B720 /* Workspace.swift */,
+			);
+			path = ModelStudio;
+			sourceTree = "<group>";
+		};
+		F6C9373A7E30306505279842 = {
+			isa = PBXGroup;
+			children = (
+				E3D23FC60D4DC8AFC7FB1238 /* ModelStudio */,
+				4BE391211F8C46368E7D211C /* Runtime */,
+				FFD5ACA0ADFFB0578E701555 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FFD5ACA0ADFFB0578E701555 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E0D0F3972CF84FCACAB69A28 /* ModelStudio.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4BABC7624BA6F3F603BE76F5 /* ModelStudio */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13181E3056433EF4004F6932 /* Build configuration list for PBXNativeTarget "ModelStudio" */;
+			buildPhases = (
+				0BC2260BFB718CE2B5B60811 /* Sources */,
+				D9E5832C84244B56B865B592 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ModelStudio;
+			packageProductDependencies = (
+			);
+			productName = ModelStudio;
+			productReference = E0D0F3972CF84FCACAB69A28 /* ModelStudio.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1940B2DDC250507A4355C700 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = 4ECC0EC2A1CF2B525267B29C /* Build configuration list for PBXProject "ModelStudio" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = F6C9373A7E30306505279842;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4BABC7624BA6F3F603BE76F5 /* ModelStudio */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D9E5832C84244B56B865B592 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3B369ACB8FD1445DB4705845 /* Runtime in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0BC2260BFB718CE2B5B60811 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C9264AE99EC78244BD91D55 /* ModelStudioApp.swift in Sources */,
+				27F1A919E74EA13E5F417296 /* StudioSettingsView.swift in Sources */,
+				A4F32A5A50FB4F0F9FD3C328 /* ModelingRequestView.swift in Sources */,
+				F17086C28EC84B99B19FF96F /* ModelingSession.swift in Sources */,
+				C49A2209ED3A4B8BB3232FFD /* ModelingProvider.swift in Sources */,
+				E85FA83380A8409B980BC4C4 /* ProviderConnections.swift in Sources */,
+				C4EB806924AC49C49C7071F4 /* ProviderRuntime.swift in Sources */,
+				D8C3174D4322419DAEEEB9A0 /* ModelingContext.swift in Sources */,
+				358CB03C16D145EBA6B17FC6 /* ConversationDimensions.swift in Sources */,
+				3F9AE8DD695C4BB9A463278C /* ModelingProposal.swift in Sources */,
+				71063C2E38EE41F79264E2B9 /* EditableMesh.swift in Sources */,
+				99CCFEDFDEA74300B3FCEA5A /* PrintChecksView.swift in Sources */,
+				74B63E4ECC6A4D01A34499E1 /* PrintGeometry.swift in Sources */,
+				B3B4A6F4C72F4986B6CFE514 /* DimensionControls.swift in Sources */,
+				9C2C92DDB6DA469591E32747 /* EditableModelFile.swift in Sources */,
+				06E0A3EA399446B994AC0757 /* WorkspaceFileDialogs.swift in Sources */,
+				5CE88B6E061A49998FB79649 /* ModelDimensions.swift in Sources */,
+				A1EE9DF88D9E496B9AE651A3 /* ManualEditorView.swift in Sources */,
+				1550E4FB916A4D8BB171B6B8 /* ManualMeshEdit.swift in Sources */,
+				DDD1CB1AE0F04E8EAA079772 /* ModelViewport.swift in Sources */,
+				5CF9D484212B4957BB97A74D /* OBJReader.swift in Sources */,
+				E2B061EC96734365873BF9A1 /* STLReader.swift in Sources */,
+				6476816AB2754FA38E18B5D3 /* ThreeMFReader.swift in Sources */,
+				9841C995684E470D849C4EE9 /* CoreThreeMFExport.swift in Sources */,
+				91D75DE06654D6C4CC31C32C /* WorkspaceView.swift in Sources */,
+				7ACEC0D48C7A406C99BDB9A8 /* Workspace.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		87B335236A600A420665F25E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		D286DD644F5AD9EB7F4BFA4A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ModelStudio/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "3D Model Studio";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.t-boris.3d-model-studio";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E639EF1AB169159299F83816 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ModelStudio/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "3D Model Studio";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.graphics-design";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.t-boris.3d-model-studio";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F0E53860E5734BE2F960F996 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		13181E3056433EF4004F6932 /* Build configuration list for PBXNativeTarget "ModelStudio" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E639EF1AB169159299F83816 /* Debug */,
+				D286DD644F5AD9EB7F4BFA4A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4ECC0EC2A1CF2B525267B29C /* Build configuration list for PBXProject "ModelStudio" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F0E53860E5734BE2F960F996 /* Debug */,
+				87B335236A600A420665F25E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1940B2DDC250507A4355C700 /* Project object */;
+}

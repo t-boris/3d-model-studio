@@ -1,0 +1,16 @@
+PrusaSlicer-2.9.7 based on Slic3r (with GUI support)
+Tolerance ±0.01 mm inclusive
+
+created (created.3mf), expected X/Y/Z (24, 12, 8) mm
+SHA-256 88ae1ea48e1fec7c648e8c8af400af56e6c402cfc9e816d2556d766603c304fe
+PASS X measured 24.000000 mm, expected 24 mm
+PASS Y measured 12.000000 mm, expected 12 mm
+PASS Z measured 8.000000 mm, expected 8 mm
+GUI opening and rescaling observation: pending
+
+centimeter (centimeter.3mf), expected X/Y/Z (20, 10, 7) mm
+SHA-256 326b5a71f35912c4023c82e24e162e8fb72347811badaddfaa3e5a8e9b9571ce
+PASS X measured 20.000000 mm, expected 20 mm
+PASS Y measured 10.000000 mm, expected 10 mm
+PASS Z measured 7.000000 mm, expected 7 mm
+GUI opening and rescaling observation: pending

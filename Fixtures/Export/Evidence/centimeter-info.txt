@@ -1,0 +1,14 @@
+[centimeter.3mf]
+size_x = 20.000000
+size_y = 10.000000
+size_z = 7.000000
+min_x = -10.000000
+min_y = -5.000000
+min_z = -3.500000
+max_x = 10.000000
+max_y = 5.000000
+max_z = 3.500000
+number_of_facets = 12
+manifold = yes
+number_of_parts =  1
+volume = 1400.000000

@@ -1,14 +1,73 @@
 # 3D Model Studio
 
-Build a native macOS application with a Swift UI for viewing, creating, and editing 3D models through both direct geometry manipulation and a conversational AI agent. Users can configure the agent and model, describe changes, and apply AI instructions to selected geometry.
+3D Model Studio is a native macOS application with a SwiftUI interface. Use Open (Command-O) to load an STL, OBJ, Core 3MF, or multipart 3MF Production model. The importer places each build item and component in model space. Each occurrence can be edited independently. Choose the source unit for STL and OBJ. The viewport displays the active mesh and its unit.
 
-## Problem
+## Run locally
 
-Users need a single workspace to inspect 3D files, create geometry from descriptions, and refine it through a combination of manual edits and conversational instructions.
+On macOS 14 or later, open `ModelStudio.xcodeproj` in Xcode and run the shared `ModelStudio` scheme. It builds `ModelStudio.app` with bundle identifier `com.github.t-boris.3d-model-studio`. Open Settings from the workspace toolbar or app menu, or press Command-Comma.
 
-## Scope
+The [import fixtures](Fixtures/Import/README.md) include one block per format, expected geometry, and dimensions for the manual and conversational editing tasks.
 
-Proposed v1, pending confirmation: a native macOS application with a Swift UI, basic 3D viewing, conversational model creation and revision, manual geometry editing, selection-based AI edits, and agent/model settings. Use a basic visual appearance. Out of v1: advanced rendering and material authoring. The intended modeling domain, the balance between creation and imported-model editing, import coverage, and supported agent integrations remain open. Codex, Claude, and Antigravity were suggested as candidate agents, not confirmed integrations.
+## Package and install on macOS
+
+On a build Mac with Xcode, `bash Scripts/package-macos.sh --local /path/to/output` builds a universal Release app and writes the ad-hoc-signed `ModelStudio-local.zip` for local testing.
+
+For direct distribution, set `MODEL_STUDIO_SIGNING_IDENTITY` to a Developer ID Application identity and `MODEL_STUDIO_NOTARY_PROFILE` to an authorized `notarytool` Keychain profile. Run `bash Scripts/package-macos.sh --release /path/to/output`. It signs the app with hardened runtime, waits for Apple notarization, staples the ticket, and writes `ModelStudio.zip` after verifying the app with macOS. [Apple distribution guide](https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution) · [Apple notarization guide](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow)
+
+On the destination Mac, double-click the release ZIP in Finder, drag `ModelStudio.app` to Applications, and open it from Applications. Open Settings to connect the providers. A release test uses a fresh download on a clean Mac without Docker Desktop and checks Finder launch, live Settings authentication, and one applied operation per provider. [Provider settings](Providers/README.md)
+
+## Navigate and edit in the viewport
+
+Use **Orbit** on the left and drag to rotate. Scroll to zoom in any mode. Click a face of the view cube to align the camera or click **Home View** to restore its starting angle and zoom.
+
+Choose **Move Point** and drag a corner. Choose **Reshape Surface**, click triangles to select them, and drag the selected surface. Both tools move geometry parallel to the screen. With **Extrude**, select one triangle or a connected flat patch and drag outward along its normal. For a straight-on view of the patch, drag upward. In an editing mode, dragging empty space still orbits the model. Use the controls below the viewport for exact offsets and units.
+
+## Dimensions and editable files
+
+In an empty workspace, choose **New Block** to start with a 10 mm cube, or open a mesh. Width (X), depth (Y), and height (Z) measure the distance from the minimum to the maximum coordinate along each model axis. Only vertices used by faces contribute to those bounds. Rotating the view leaves the measurements unchanged. V1 dimensional targets cover these three whole-model spans.
+
+Enter a nonnegative length and select µm, mm, cm, m, in, or ft. **Set Once** scales that axis about its minimum coordinate. **Pin Current** preserves the measured span. **Change Pin** resizes the model and replaces that pin together. **Unpin** releases it for later edits. Resizing a flat axis cannot create thickness.
+
+Each proposed span must fall within **±0.01 mm**, inclusive, of its target after conversion to millimeters. The same absolute tolerance applies to the current operation’s targets and every active pin. A conflict reports the dimension, target, and proposed measurement and leaves the geometry and pins intact.
+
+Use **Save Editable Model…** (Command-S) to write a `.studio3d` file. Use **Open…** (Command-O) to resume editing. The file stores the edited indexed mesh, face identities, model unit, and explicit pins with their target values and units. For imported 3MF assemblies, it also stores the object hierarchy, build placements and the occurrence that owns each edited face. You can reopen and edit the assembly without the original 3MF. Existing version-1 saves still open.
+
+Opening another model or quitting with unsaved edits offers **Save**, **Discard Changes**, and **Cancel**. Adding, changing or removing a pin counts as an edit. Save must finish before Open or Quit continues. If you discard and then cancel the picker or unit choice, or the replacement cannot open, your model and its edits stay in the workspace.
+
+## Conversational modeling
+
+Choose **Create from Description…** in an empty workspace, or **Ask Agent → Revise Entire Model…** on an open model. Describe the shape or change. For example, ask for a block 2 cm wide and 1 cm deep. If the studio asks you to restate a dimension, name its final whole-model span and unit, for example “final span along X is 30 mm.” Choose **Send Answer** to continue the same request with your earlier answers.
+
+Review the proposed surface, measured spans and requested dimensions. **Apply to Model** updates the workspace and lets you continue the conversation on the edited geometry. **Discard** keeps the previous model. A conflicting pin or unsupported measurement appears in the sheet. Closing the sheet ends its conversation.
+
+## Print geometry checks
+
+Choose **Print Checks** below the viewport, then **Run Checks**. A failed result lists problems by face or edge. Select a problem to see its face IDs, suggested correction, and the build item and component path for a 3MF assembly. The viewport outlines affected faces in orange, marks a corner even when a triangle has collapsed to a point, and draws the affected edge in pink when applicable. After a geometry edit, the workspace shows **Outdated · Run again** until you recheck. Pinning a dimension or rotating the view keeps the result current.
+
+The checks use the mesh’s shared vertex indices and apply in every model unit.
+
+- Each triangle must have twice its area greater than 10⁻¹² times the square of its longest edge. This flags collapsed triangles and extremely thin slivers.
+- Each set of three vertex indices may occur in only one face, in either winding.
+- Each edge between distinct vertex indices must have exactly two incident faces. One face indicates an open boundary. Three or more indicate a non-manifold edge.
+- The two faces sharing an edge must traverse it in opposite directions.
+
+A pass covers these triangle and edge checks. Self-intersections, vertex-only contacts, inward-facing shells, wall thickness, supports, printer settings and material behavior remain outside their scope.
+
+## Export for a slicer
+
+Choose **Export Core 3MF…** in the toolbar or File menu. The studio checks the current surface, prepares a millimeter 3MF and checks the geometry read back from that package. If a check fails, the print inspector highlights the affected faces and edges. Correct the model and export again. A passing export opens the destination picker and writes the checked package atomically.
+
+Edited assemblies keep their build placement and component hierarchy. Edits to one repeated occurrence travel with that occurrence, including after reopening an editable save. Exporting keeps any unsaved workspace changes marked for editable save. [Acceptance files, expected dimensions and PrusaSlicer comparison](Fixtures/Export/README.md)
+
+## v1 scope
+
+- Open STL, OBJ, and 3MF models as editable geometry and inspect them in a 3D viewport.
+- Create models from descriptions and refine new or imported models through manual edits or conversation, including instructions targeting selected faces.
+- Use precise dimensional controls with explicit units and optional persistent dimensions, and check geometry for 3D printing.
+- Save editable models for later work and export validated Core 3MF in millimeters for slicing.
+- Use Codex, Claude, or Antigravity for conversational modeling. All three integrations are required in v1, with agent switching and model selection in Settings.
+
+Settings route modeling requests to Codex CLI, Claude Code, or Google's Antigravity SDK. Connect each agent in Settings to install its native runtime, check access to the selected model and save its API key in macOS Keychain. Modeling requests run in a fresh private workspace with operation-scoped geometry. Offline checks cover setup, retry and routing. Clean-Mac installation, Finder launch and live modeling with each provider remain release checks. [Provider setup, model choices and evidence](Providers/README.md)
 
 ## Specification
 
@@ -23,3 +82,5 @@ The confirmed brief, decisions and requirements are in [`docs/features/3d-model-
 - REQ-005 Selection-based AI editing
 - REQ-006 Agent and model configuration
 - REQ-007 3D-printing geometry validation
+- REQ-008 Save and reopen an editable model
+- REQ-009 Export edited geometry for a slicer
