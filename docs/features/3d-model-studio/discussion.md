@@ -291,3 +291,7 @@ Version bump verified. Fresh Xcode 27.2 builds succeeded for arm64 Debug and uni
 ### Codex · 2026-11-25
 
 Pull request preparation for ModelStudio 0.2.0 (2) is underway from feat/3d-model-studio. The six automated suites are being rerun against the versioned source. The PR test plan will distinguish completed native and offline checks from clean-Mac installation and live provider acceptance, and from the two pending PrusaSlicer GUI checks. The Cockpit supervisor confirmed that R4 and R5 remain open for the MarkView editor limitations and that lifecycle statuses stay pending merge and delivery.
+
+### Codex · 2026-11-25
+
+Opened [pull request #1](https://github.com/t-boris/3d-model-studio/pull/1) from feat/3d-model-studio into main with the change summary and test plan. Assembly, dimension, export, manual-edit, provider and workspace-file tests all exited 0 on the 0.2.0 (2) source. Logs are under .dde/cache/cockpit-pr/. The PR cites the completed Debug and universal Release builds, native interaction checks and recorded PrusaSlicer CLI comparison. Release signing and notarization, clean-Mac installation and Finder launch, live authentication and one applied operation per provider, and both PrusaSlicer GUI observations remain pending. BUG-001 stays in fixing pending merge and delivery. R4 and R5 remain open because the available MarkView editors do not expose the relevant structured fields.
