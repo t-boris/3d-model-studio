@@ -33,6 +33,7 @@ understanding_notes:
   Acceptance Criteria: Q-007 закреплён в REQ-009 как способ приёмки. Проверку размещения сборки нужно выполнить отдельно, если CLI показывает локальные размеры объектов. Фактическая приёмка ещё впереди. [Код PrusaSlicer 2.9.6](https://github.com/prusa3d/PrusaSlicer/blob/version_2.9.6/src/libslic3r/Model.cpp#L1160-L1177)
 questions_left: 0
 confirmed: 2026-11-25
+updated: 2026-11-25
 ---
 
 # 3D Model Studio
@@ -40,6 +41,8 @@ confirmed: 2026-11-25
 ## Idea
 
 Build a native macOS application with a Swift UI for viewing, creating, and editing 3D models through both direct geometry manipulation and a conversational AI agent. Users can configure the agent and model, describe changes, and apply AI instructions to selected geometry.
+
+DEC-013 supersedes the Docker Desktop setup described in the earlier Dependencies note. Settings provisions native runtimes for Codex, Claude and Antigravity and saves the provider key in Keychain after a successful connection check. The [provider guide](../../../Providers/README.md) describes setup and recovery. Release acceptance still requires installation and Finder launch on one clean Mac without Docker Desktop, live authentication in Settings, and one applied modeling operation with each provider.
 
 ## Problem
 

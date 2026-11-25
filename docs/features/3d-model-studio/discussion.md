@@ -243,3 +243,11 @@ I-4 verification is in progress. The selection harness already covers the three 
 ### Agent · 2026-11-25
 
 I-4 completion condition met at 8e0925f. The native Debug build accepted selection of one and two triangles and submission of a two-face instruction. All 21 scripted provider and model combinations passed, including exact multipart disclosure, refusal, expiry, shared-point and topology review, stale and declined confirmation, dimensional conflicts and publication of the confirmed geometry. Manual edit, assembly, workspace-file and export suites passed with the named fixture. Build and test logs are in .dde/cache/i4/. BUG-001 remains open for the generated fix. Native reproduction and the expected result are recorded on the bug. Live authenticated provider operations remain with I-5.
+
+### Agent · 2026-11-25
+
+I-5 is checking the shared ModelStudio scheme and the provider resources in its Release product. The current provider guide and DEC-013 specify native setup in Settings. The earlier Docker Desktop dependency note describes the superseded setup. Clean-Mac installation, Finder launch, live authentication and an applied operation for each provider remain pending.
+
+### Agent · 2026-11-25
+
+I-5 implementation verification passed at d560aa9. ModelStudio 0.1.0 (1) Release built with the shared scheme in Xcode 27.2 on macOS 27.2.1. The bundle contains arm64 and x86_64 app slices, both sets of pinned runtime inputs, the sandbox profile and the Antigravity adapter. The packaged installer passed all six offline archive cases. The Settings controller and subprocess doubles passed all six model routes, geometry-free checks, credential and download failure recovery, repair, disconnect and reconnection. Logs are in .dde/cache/i5/. The overview’s historical understanding_notes.Dependencies field still mentions Docker Desktop. Its Idea section explicitly supersedes that note per the supervisor and points to DEC-013 and Providers/README.md. Release handoff for REQ-001 and REQ-006: install on one clean Mac without Docker Desktop, launch from Finder, authenticate all three providers in Settings and apply one live modeling operation with each on that same Mac. All four checks remain pending.
