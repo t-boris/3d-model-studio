@@ -251,3 +251,11 @@ I-5 is checking the shared ModelStudio scheme and the provider resources in its 
 ### Agent · 2026-11-25
 
 I-5 implementation verification passed at d560aa9. ModelStudio 0.1.0 (1) Release built with the shared scheme in Xcode 27.2 on macOS 27.2.1. The bundle contains arm64 and x86_64 app slices, both sets of pinned runtime inputs, the sandbox profile and the Antigravity adapter. The packaged installer passed all six offline archive cases. The Settings controller and subprocess doubles passed all six model routes, geometry-free checks, credential and download failure recovery, repair, disconnect and reconnection. Logs are in .dde/cache/i5/. The overview’s historical understanding_notes.Dependencies field still mentions Docker Desktop. Its Idea section explicitly supersedes that note per the supervisor and points to DEC-013 and Providers/README.md. Release handoff for REQ-001 and REQ-006: install on one clean Mac without Docker Desktop, launch from Finder, authenticate all three providers in Settings and apply one live modeling operation with each on that same Mac. All four checks remain pending.
+
+### Agent · 2026-11-25
+
+Build-enabled Cockpit I-6 is in progress. Earlier source checks covered the indexed report, inspector overlays, stale results and repair. This pass will rerun the manual and scripted provider paths and verify the current native inspector. The supervisor confirmed that the existing tasks/todo.md stays unchanged and untracked.
+
+### Agent · 2026-11-25
+
+Build-enabled Cockpit I-6 completed. The Debug inspector showed all five defect categories, exact face and edge identities, overlays, repair guidance and the scope of a pass. A new block and the Bambu Studio Production fixture both followed Pass, Outdated, Fail, Outdated and Pass through Move Point and repair. Faces 16 and 19 named Build item 2 · Component 1. c223951 strengthens automated checks for the actual SceneKit edge endpoints and for scripted open-edge failure and repair with stable surviving face IDs. Six verification suites passed. The inspector and shared report needed no production changes. Build log: .dde/cache/i6/xcodebuild.log.
