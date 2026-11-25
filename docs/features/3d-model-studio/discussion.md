@@ -287,3 +287,7 @@ The Cockpit supervisor approved ModelStudio 0.2.0 (2) for this feature update. T
 ### Codex · 2026-11-25
 
 Version bump verified. Fresh Xcode 27.2 builds succeeded for arm64 Debug and universal arm64/x86_64 Release. Both generated app bundles report CFBundleShortVersionString 0.2.0 and CFBundleVersion 2. Build logs are .dde/cache/cockpit-version/xcodebuild-debug.log and .dde/cache/cockpit-version/xcodebuild-release.log. Release acceptance remains pending for clean-Mac installation, Finder launch and live provider operations. The PrusaSlicer GUI observations also remain pending.
+
+### Codex · 2026-11-25
+
+Pull request preparation for ModelStudio 0.2.0 (2) is underway from feat/3d-model-studio. The six automated suites are being rerun against the versioned source. The PR test plan will distinguish completed native and offline checks from clean-Mac installation and live provider acceptance, and from the two pending PrusaSlicer GUI checks. The Cockpit supervisor confirmed that R4 and R5 remain open for the MarkView editor limitations and that lifecycle statuses stay pending merge and delivery.
