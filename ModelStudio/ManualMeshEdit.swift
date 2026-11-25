@@ -76,10 +76,12 @@ enum ManualMeshEdit {
                 let old = mesh.faces[i].vertices
                 result.replaceCorners(at: i, with: SIMD3(cap[old.x]!, cap[old.y]!, cap[old.z]!))
             }
+            let firstWallID = result.nextFaceID
             for edge in patch.boundary {
                 result.addFace(edge.x, edge.y, cap[edge.y]!)
                 result.addFace(edge.x, cap[edge.y]!, cap[edge.x]!)
             }
+            try result.assembly?.recordExtrusion(capFaceIDs: selection, wallFaceIDs: firstWallID..<result.nextFaceID)
         }
         return result
     }

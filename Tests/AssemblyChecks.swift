@@ -69,6 +69,110 @@ try await checkAssembly("repeated-block.3mf", [([88, 55, 10], [98, 75, 15]),
                                               ([200, 0, 0], [220, 10, 5])])
 
 @MainActor
+func checkManualAssembly(_ file: String) async throws {
+    let workspace = Workspace()
+    await workspace.open(assemblyDirectory.appendingPathComponent(file))
+    let original = workspace.activeModel!
+    let assembly = original.mesh.assembly!
+    let occurrence = assembly.occurrences[0]
+    let top = original.mesh.vertices[occurrence.importedVertices].map(\.z).max()!
+    let cap = original.mesh.faces.filter { face in
+        occurrence.contains(faceID: face.id) && (0..<3).allSatisfy { original.mesh.vertices[face.vertices[$0]].z == top }
+    }
+    precondition(cap.count == 2)
+    let selection = Set(cap.map(\.id))
+
+    func edit(_ operation: ManualMeshEdit, _ distance: Double, _ unit: MeshUnit) throws {
+        try workspace.applyManualEdit(operation, basedOn: workspace.activeModel!, distance: distance, unit: unit)
+    }
+
+    workspace.pinCurrent(.width)
+    workspace.pinCurrent(.depth)
+    workspace.pinCurrent(.height)
+    let pinned = workspace.activeModel!
+    do {
+        try edit(.extrude(selection), 0.2, .centimeter)
+        fatalError("A pinned height must reject extrusion.")
+    } catch {
+        precondition(error.localizedDescription.contains("Pinned Height (Z)"))
+    }
+    precondition(workspace.activeModel!.mesh == pinned.mesh && workspace.activeModel!.pins == pinned.pins)
+    workspace.unpin(.height)
+
+    try edit(.movePoint(cap[0].vertices.x, axis: .height), 1000, .micron)
+    precondition(workspace.activeModel!.mesh.assembly == assembly)
+    precondition(workspace.activeModel!.mesh.vertices[cap[0].vertices.x].z == top + 1)
+    try edit(.movePoint(cap[0].vertices.x, axis: .height), -1, .millimeter)
+    try edit(.reshape(selection, axis: .height), 1000, .micron)
+    precondition(workspace.activeModel!.mesh.assembly == assembly)
+    try edit(.extrude(selection), 0.2, .centimeter)
+
+    let edited = workspace.activeModel!
+    let editedAssembly = edited.mesh.assembly!
+    precondition(editedAssembly.startPart == assembly.startPart && editedAssembly.buildItems == assembly.buildItems)
+    precondition(editedAssembly.objects == assembly.objects)
+    precondition(editedAssembly.occurrences.dropFirst() == assembly.occurrences.dropFirst())
+    for sibling in assembly.occurrences.dropFirst() {
+        precondition(edited.mesh.vertices[sibling.importedVertices] == original.mesh.vertices[sibling.importedVertices])
+        precondition(edited.mesh.faces[sibling.importedFaceIDs] == original.mesh.faces[sibling.importedFaceIDs])
+    }
+    let walls = edited.mesh.faces.dropFirst(original.mesh.faces.count)
+    precondition(walls.count == 8)
+    precondition(edited.mesh.faces.prefix(original.mesh.faces.count).map(\.id) == original.mesh.faces.map(\.id))
+    precondition(edited.mesh.vertices.suffix(4).allSatisfy { $0.z == top + 3 })
+    for face in edited.mesh.faces {
+        precondition(editedAssembly.occurrences.count { $0.contains(faceID: face.id) } == 1)
+    }
+    let owner = editedAssembly.occurrences[0]
+    precondition(walls.allSatisfy { owner.contains(faceID: $0.id) })
+    let usedVertices = Set(edited.mesh.faces.filter { owner.contains(faceID: $0.id) }.flatMap {
+        [$0.vertices.x, $0.vertices.y, $0.vertices.z]
+    })
+    precondition(usedVertices == Set(occurrence.importedVertices).union(original.mesh.vertices.count..<edited.mesh.vertices.count))
+    precondition(edited.pins == pinned.pins.filter { $0.dimension != .height })
+    await workspace.validatePrintGeometry()
+    precondition(workspace.printValidation.label == "Pass")
+
+    let data = try EditableModelFile(model: edited).encoded()
+    var reopened = try EditableModelFile(data: data).model
+    precondition(reopened.mesh == edited.mesh && reopened.pins == edited.pins && reopened.unit == edited.unit)
+    // The first two wall triangles share the same rim edge and form a planar patch.
+    // Exercise an extrusion whose cap consists of already-generated face IDs.
+    let wallSelection = Set(walls.prefix(2).map(\.id))
+    reopened.unpin(.width)
+    reopened.unpin(.depth)
+    let extensionMesh = try ManualMeshEdit.extrude(wallSelection).proposal(for: reopened, distance: 1, unit: .millimeter)
+    try reopened.commit(extensionMesh)
+    let extensionWalls = reopened.mesh.faces.dropFirst(edited.mesh.faces.count)
+    precondition(extensionWalls.count == 8)
+    precondition(extensionWalls.allSatisfy { reopened.mesh.assembly!.occurrences[0].contains(faceID: $0.id) })
+    precondition(reopened.mesh.assembly!.occurrences.dropFirst() == assembly.occurrences.dropFirst())
+
+    func heightTarget(_ millimeters: Double) -> DimensionTarget {
+        DimensionTarget(dimension: .height, value: millimeters / 10, unit: .centimeter)
+    }
+    let height = edited.extents.z
+    precondition(workspace.resize(to: heightTarget(height + 1), changingPin: false))
+    precondition(workspace.activeModel!.extents.z == height + 1 && workspace.activeModel!.pins == edited.pins)
+    precondition(workspace.resize(to: heightTarget(height + 2), changingPin: false))
+    precondition(workspace.activeModel!.extents.z == height + 2 && workspace.activeModel!.pins == edited.pins)
+    workspace.pinCurrent(.height)
+    let newPin = heightTarget(height + 3)
+    precondition(workspace.resize(to: newPin, changingPin: true))
+    let resized = workspace.activeModel!
+    precondition(resized.extents.z == height + 3 && resized.pins == edited.pins + [newPin])
+    precondition(!workspace.resize(to: heightTarget(height + 4), changingPin: false))
+    precondition(workspace.modelError?.contains("Pinned Height (Z)") == true)
+    precondition(workspace.activeModel!.mesh == resized.mesh && workspace.activeModel!.pins == resized.pins)
+    precondition(resized.mesh.assembly == editedAssembly)
+    print("\(file): all manual tools, extrusion ownership and isolation, archive round trip, and explicit-unit pin transactions passed.")
+}
+
+for file in ["bambu-blocks.3mf", "orca-blocks.3mf", "repeated-block.3mf"] {
+    try await checkManualAssembly(file)
+}
+
+@MainActor
 func checkFailedReplacements() async throws {
     let workspace = Workspace()
     await workspace.open(assemblyDirectory.appendingPathComponent("repeated-block.3mf"))

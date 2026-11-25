@@ -29,12 +29,30 @@ struct ThreeMFAssembly: Codable, Equatable {
         // Face IDs remain meaningful after array reordering or face removal.
         let importedVertices: Range<Int>
         let importedFaceIDs: Range<Int>
+        // Older archives omit this field. Current face corners give the vertex
+        // indices for an edited occurrence, including any new cap vertices.
+        var addedFaceIDRanges: [Range<Int>]? = nil
+
+        func contains(faceID: Int) -> Bool {
+            importedFaceIDs.contains(faceID) || addedFaceIDRanges?.contains { $0.contains(faceID) } == true
+        }
     }
 
     let startPart: String
     let buildItems: [Reference]
     var objects: [ObjectID: Object] = [:]
     var occurrences: [Occurrence] = []
+
+    mutating func recordExtrusion(capFaceIDs: Set<Int>, wallFaceIDs: Range<Int>) throws {
+        guard let first = capFaceIDs.first,
+              let index = occurrences.firstIndex(where: { $0.contains(faceID: first) }),
+              capFaceIDs.allSatisfy(occurrences[index].contains(faceID:)) else {
+            throw MeshImportError("Extrude faces belonging to one 3MF assembly occurrence.")
+        }
+        var ranges = occurrences[index].addedFaceIDRanges ?? []
+        ranges.append(wallFaceIDs)
+        occurrences[index].addedFaceIDRanges = ranges
+    }
 }
 
 // 3MF stores three basis vectors followed by the origin. Translation is
