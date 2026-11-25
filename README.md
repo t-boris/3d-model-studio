@@ -45,7 +45,7 @@ A pass covers these triangle and edge checks. Self-intersections, vertex-only co
 - Save editable models for later work. Planned slicer export writes Core 3MF in millimeters and must preserve physical dimensions.
 - Use Codex, Claude, or Antigravity for conversational modeling. All three integrations are required in v1, with agent switching and model selection in Settings.
 
-Settings route modeling requests to Codex CLI, Claude Code, or Google's Antigravity SDK. Each runs in a disposable container with operation-scoped geometry. Offline tests cover clarification, creation and whole-model revision through all three routes. Authenticated service access and interactive app use still need verification. [Provider setup, model choices and evidence](Providers/README.md)
+Settings route modeling requests to Codex CLI, Claude Code, or Google's Antigravity SDK. Connect each agent in Settings to install its native runtime, check access to the selected model and save its API key in macOS Keychain. Modeling requests run in a fresh private workspace with operation-scoped geometry. Offline checks cover setup, retry and routing. Clean-Mac installation, Finder launch and live modeling with each provider remain release checks. [Provider setup, model choices and evidence](Providers/README.md)
 
 ## Specification
 

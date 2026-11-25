@@ -1,5 +1,6 @@
 """One studio turn in a fresh Google Antigravity harness."""
 import asyncio
+import os
 import sys
 
 from google.antigravity import Agent, CapabilitiesConfig, LocalAgentConfig
@@ -10,7 +11,7 @@ from google.antigravity.types import BuiltinTools
 async def main():
     config = LocalAgentConfig(
         model=sys.argv[1],
-        workspaces=["/studio"],
+        workspaces=[os.getcwd()],
         capabilities=CapabilitiesConfig(enable_subagents=False, enabled_tools=[BuiltinTools.FINISH]),
         policies=[policy.deny_all(), policy.allow(BuiltinTools.FINISH)],
     )

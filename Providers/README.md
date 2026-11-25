@@ -2,33 +2,34 @@
 
 In Settings, choose an agent and a model. The choice is saved per agent. In an empty workspace choose **Create from Description**. With a model open, use **Ask Agent** to revise the entire model or continue creating it. To target faces, pick them with a surface tool and choose **Edit Selected Faces**. Review the proposal in the sheet. Choose **Apply to Model** for an edit within your selection or **Confirm Outside Changes** to accept its highlighted effects on other faces.
 
-## Runtime setup
+## Connect from the installed app
 
-Install and start Docker Desktop on the Mac. Prepare each desired runtime image once from the repository root. The build context is the Providers directory. Only the Dockerfile and the Antigravity adapter are included.
+1. Launch **ModelStudio** from Finder and open **Settings → Background modeling**.
+2. Select an agent and a model. **Get a … API key** opens the provider’s key management page. Use an account with API access to the selected model.
+3. Paste the key into **API key** and choose **Connect / Retry**. The app downloads and verifies the native runtime in your user Library, then asks that model to echo a random phrase. This small request uses the provider account and contains no model geometry.
+4. Wait for **Connected** and the model name. A successful check saves the key in your Mac’s Keychain. Close Settings and start a modeling request. Repeat for each agent you want to use.
 
-```sh
-docker build --target codex -t modelstudio-codex:1 Providers
-docker build --target claude -t modelstudio-claude:1 Providers
-docker build --target antigravity -t modelstudio-antigravity:1 Providers
-```
+Settings remembers each agent’s model. After reopening Settings or switching models, **Key saved** means the app found the local credential. Choose **Connect / Retry** with the key field empty to check current access. For an authentication failure, check the account’s key and model entitlement or enter a replacement key. A failed replacement preserves the previously saved key. For a download failure, check the network and free space, then retry. **Reinstall and Retry** downloads a fresh verified runtime. **Disconnect** removes the saved key for that provider.
 
-Launch ModelStudio with the selected provider's environment variable available to the app process. The studio supplies only that variable to the agent. Model access depends on the account. Each request runs the prepared image on the local Docker socket. A missing runtime, unavailable model, failed request or malformed response ends the operation and preserves the model.
-
-| Agent | Noninteractive interface | Models in Settings | Runtime variable |
+| Agent | Provisioned runtime | Key | Models in Settings |
 | --- | --- | --- | --- |
-| Codex | OpenAI Codex CLI 0.172.0, `codex exec --model … -`, final message on stdout | `gpt-6.2-sol`, `gpt-6.2-astra` | `CODEX_API_KEY` |
-| Claude | Anthropic Claude Code 2.1.332, `claude --print --model …`, piped prompt and text reply | `sonnet`, `opus` (official model aliases) | `ANTHROPIC_API_KEY` |
-| Antigravity | Google's Python SDK 0.1.24, one `Agent.chat` call with `LocalAgentConfig.model` | `gemini-4-hydrogen`, `gemini-3.8-flash` | `GEMINI_API_KEY` |
+| Codex | OpenAI Codex CLI 0.172.0 for macOS | OpenAI API key | `gpt-6.2-sol`, `gpt-6.2-astra` |
+| Claude | Anthropic Claude Code 2.1.332 native executable | Anthropic API key | `sonnet`, `opus` |
+| Antigravity | Google Antigravity SDK 0.1.24 with private CPython 3.12.16 | Gemini API key | `gemini-4-hydrogen`, `gemini-3.8-flash` |
 
-Codex uses ephemeral execution with user configuration and rules ignored. Shell, computer use, plugins, hooks and web search are disabled. The installed CLI help confirms the flags. [Noninteractive execution](https://developers.openai.com/codex/noninteractive) · [Codex model guidance](https://developers.openai.com/api/docs/guides/model-selection)
+Codex uses ephemeral noninteractive execution, disables shell, computer use, multi-agent, plugins, hooks and web search, and ignores user configuration and rules. [OpenAI noninteractive execution](https://developers.openai.com/codex/noninteractive)
 
-Claude uses bare print mode, an empty built-in tool set, strict empty MCP configuration, disabled slash commands and disabled session persistence. The installed CLI help confirms the flags. [CLI reference](https://code.claude.com/docs/en/cli-reference) · [Model aliases](https://code.claude.com/docs/en/model-config)
+Claude uses bare print mode, an empty built-in tool set, strict empty MCP configuration, disabled slash commands and disabled session persistence. [Claude CLI reference](https://code.claude.com/docs/en/cli-reference) · [Claude model aliases](https://code.claude.com/docs/en/model-config)
 
-Antigravity runs Google's agent harness with its finish tool as the sole enabled and permitted tool. The SDK policy denies other tool calls and disables subagents. Google publishes Linux wheels for both Intel and Apple Silicon Docker hosts. [SDK and model configuration](https://github.com/google-antigravity/antigravity-sdk-python) · [Tool capabilities](https://antigravity.google/docs/sdk/tools/) · [SDK distribution](https://pypi.org/project/google-antigravity/0.1.24/)
+Antigravity uses Google’s local agent harness with the selected model, a finish-only tool policy and subagents disabled. Google publishes macOS wheels for both architectures. [SDK distribution](https://pypi.org/project/google-antigravity/0.1.24/) · [Google authentication](https://antigravity.google/docs/install) · [SDK model guidance](https://antigravity.google/docs/changelog)
+
+## Packaging
+
+The Xcode target copies the Runtime directory into the app’s resources. Its installer stages downloads under `~/Library/Application Support/3D Model Studio/Providers`. The packaged manifest pins both architectures’ native archive URLs and checksums. The Antigravity installer verifies its standalone Python archive and installs the architecture’s exact hash-locked wheels. Runtime setup uses system utilities supplied by macOS and the app’s resources. Each provider receives its own Keychain credential in its child environment. [Archive manifest](Runtime/artifacts.tsv) · [CPython distribution](https://github.com/astral-sh/python-build-standalone/releases/tag/20261124)
 
 ## Geometry crossing the boundary
 
-All three adapters receive the same native projection as UTF-8 JSON following the modeling instructions on stdin. Each turn gets a fresh non-root container with an empty working directory, a read-only image, temporary writable storage, and no host volumes or previous session. The provider service receives the supplied text during inference. Expiry prevents subsequent studio disclosure and session reuse. Provider-side retention follows the service's terms.
+All three adapters receive the same native projection as UTF-8 JSON following the modeling instructions on stdin. Each turn runs a new native process in a private temporary workspace and home directory. A macOS sandbox profile limits file reads to the runtime, required system paths and this turn, and limits regular file writes to the turn directory. The app removes that directory when the request finishes. The provider service receives the supplied text during inference. Expiry prevents subsequent studio disclosure and session reuse. Provider-side retention follows the service's terms.
 
 - **Creation** includes the description, current draft surface and units. An empty draft starts in millimeters.
 - **Revision** includes the instruction and complete active indexed surface. Vertices unreferenced by any face are excluded.
@@ -49,7 +50,9 @@ All three adapters receive the same native projection as UTF-8 JSON following th
 | Claude | Captured both model aliases, print mode, the empty built-in tool set and strict MCP configuration. The same three workflows and disclosure checks passed. Switching from an in-flight Codex request to Claude discarded the late Codex reply. |
 | Antigravity | Captured both Gemini choices at the Swift boundary. The packaged Python adapter passed the exact input and chosen model to an SDK double with the deny-by-default, finish-only policy. The same workflow and disclosure checks passed. |
 
-The checks use the production session, request encoder, provider routes and response decoder with a scripted transport. A local echo process also verified the native subprocess I/O with a 300 KB payload for each route. Run `Tests/run-provider-checks.sh` from the checkout. Authenticated model access, runtime image execution and live modeling quality require separate verification.
+Run `Tests/run-provider-checks.sh` from the checkout. Installer fixtures exercise all six archive selections, reject mismatched checksums and verify staging. Local process and credential doubles exercise the production setup controller, failed downloads and credentials, Keychain write failure, successful retry, repair, disconnect and reconnection. Each of the six provider/model choices receives a selected-face request through the native subprocess route. The process checks also cover 300 KB payloads, exclusion of inherited credentials, fresh turn directories and denial of reads of a separate model file.
+
+Release acceptance remains open. On one clean Mac without Docker Desktop, install the release app, launch it from Finder, connect each agent in Settings and apply one conversational modeling operation with each. Record the app and macOS versions, provider/model choices, connection statuses and operation results. Keep API keys out of the record.
 
 The same harness also runs the conversational geometry checks. For each route it creates a block after a clarification, revises that block and revises fresh STL, OBJ and 3MF imports. It checks physical spans, face identity, SceneKit updates and preservation of the current model after a rejection or provider failure.
 

@@ -29,6 +29,9 @@
 		6476816AB2754FA38E18B5D3 /* ThreeMFReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C9E0221B4F46599175E9F0 /* ThreeMFReader.swift */; };
 		91D75DE06654D6C4CC31C32C /* WorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28506277DD10666B42F6DF9 /* WorkspaceView.swift */; };
 		7ACEC0D48C7A406C99BDB9A8 /* Workspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = E490A5F5047A4ACE8087B720 /* Workspace.swift */; };
+		C4EB806924AC49C49C7071F4 /* ProviderRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705FA9235CC648FD81A902DF /* ProviderRuntime.swift */; };
+		E85FA83380A8409B980BC4C4 /* ProviderConnections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20DE04F1335B4215A120F972 /* ProviderConnections.swift */; };
+		3B369ACB8FD1445DB4705845 /* Runtime in Resources */ = {isa = PBXBuildFile; fileRef = 4BE391211F8C46368E7D211C /* Runtime */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -55,6 +58,9 @@
 		A28506277DD10666B42F6DF9 /* WorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceView.swift; sourceTree = "<group>"; };
 		E490A5F5047A4ACE8087B720 /* Workspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Workspace.swift; sourceTree = "<group>"; };
 		E0D0F3972CF84FCACAB69A28 /* ModelStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ModelStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		705FA9235CC648FD81A902DF /* ProviderRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderRuntime.swift; sourceTree = "<group>"; };
+		20DE04F1335B4215A120F972 /* ProviderConnections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConnections.swift; sourceTree = "<group>"; };
+		4BE391211F8C46368E7D211C /* Runtime */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Runtime; path = Providers/Runtime; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -66,6 +72,8 @@
 				B75028F5F6F4492281F2AFFE /* ModelingRequestView.swift */,
 				1950424F2D0D4490BD21105F /* ModelingSession.swift */,
 				CCD0600F7A524D50A70AD824 /* ModelingProvider.swift */,
+				20DE04F1335B4215A120F972 /* ProviderConnections.swift */,
+				705FA9235CC648FD81A902DF /* ProviderRuntime.swift */,
 				BB68A66D7D1B4764BE7D6214 /* ModelingContext.swift */,
 				A4134E3D5967449E87C45A1B /* ConversationDimensions.swift */,
 				2F4737E21E3A427A848AD5A5 /* ModelingProposal.swift */,
@@ -91,6 +99,7 @@
 			isa = PBXGroup;
 			children = (
 				E3D23FC60D4DC8AFC7FB1238 /* ModelStudio */,
+				4BE391211F8C46368E7D211C /* Runtime */,
 				FFD5ACA0ADFFB0578E701555 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -111,6 +120,7 @@
 			buildConfigurationList = 13181E3056433EF4004F6932 /* Build configuration list for PBXNativeTarget "ModelStudio" */;
 			buildPhases = (
 				0BC2260BFB718CE2B5B60811 /* Sources */,
+				D9E5832C84244B56B865B592 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -151,6 +161,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		D9E5832C84244B56B865B592 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3B369ACB8FD1445DB4705845 /* Runtime in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		0BC2260BFB718CE2B5B60811 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -161,6 +182,8 @@
 				A4F32A5A50FB4F0F9FD3C328 /* ModelingRequestView.swift in Sources */,
 				F17086C28EC84B99B19FF96F /* ModelingSession.swift in Sources */,
 				C49A2209ED3A4B8BB3232FFD /* ModelingProvider.swift in Sources */,
+				E85FA83380A8409B980BC4C4 /* ProviderConnections.swift in Sources */,
+				C4EB806924AC49C49C7071F4 /* ProviderRuntime.swift in Sources */,
 				D8C3174D4322419DAEEEB9A0 /* ModelingContext.swift in Sources */,
 				358CB03C16D145EBA6B17FC6 /* ConversationDimensions.swift in Sources */,
 				3F9AE8DD695C4BB9A463278C /* ModelingProposal.swift in Sources */,

@@ -1,0 +1,18 @@
+(version 1)
+(allow default)
+; Only this turn and the selected runtime can contain non-system input.
+(deny file-read-data)
+(deny file-write*)
+(deny appleevent-send)
+
+(allow file-read-data
+    (literal "/") (subpath "/System/Volumes/Preboot/Cryptexes") (subpath "/System/Cryptexes")
+    (subpath "/System/Library") (subpath "/usr/lib") (subpath "/usr/share")
+    (subpath "/bin") (subpath "/usr/bin")
+    (subpath "/private/etc") (subpath "/private/var/db/timezone")
+    (subpath "/Library/Preferences/SystemConfiguration")
+    (subpath "/Library/Keychains") (subpath "/dev")
+    (path-ancestors (param "TURN") (param "RUNTIME"))
+    (subpath (param "RUNTIME")))
+(allow file-read* file-write* (subpath (param "TURN")))
+(allow file-write-data (literal "/dev/null"))

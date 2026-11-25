@@ -19,7 +19,7 @@ final class ModelingSession: ObservableObject {
     private var task: Task<Void, Never>?
     private let transport: ProviderTransport
 
-    init(transport: ProviderTransport = DockerTransport()) { self.transport = transport }
+    init(transport: ProviderTransport? = nil) { self.transport = transport ?? NativeProviders.shared }
 
     func start(scope: ModelingScope, instruction: String, defaults: UserDefaults = .standard) {
         let continues = scope.target == nil && lastApplied != nil && scope.model?.id == lastApplied?.id

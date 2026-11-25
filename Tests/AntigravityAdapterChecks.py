@@ -1,6 +1,7 @@
 """Execute the packaged adapter against an in-memory SDK double."""
 import asyncio
 import io
+import os
 import runpy
 import sys
 from contextlib import redirect_stdout
@@ -31,12 +32,12 @@ def check(model):
     output = io.StringIO()
     with patch.dict(sys.modules, modules), patch.object(sys, "stdin", io.StringIO(payload)), \
          patch.object(sys, "argv", ["agent.py", model]), redirect_stdout(output):
-        asyncio.run(runpy.run_path("Providers/antigravity.py")["main"]())
+        asyncio.run(runpy.run_path("Providers/Runtime/antigravity.py")["main"]())
     sdk.CapabilitiesConfig.assert_called_once_with(enable_subagents=False, enabled_tools=[types.BuiltinTools.FINISH])
     hooks.policy.deny_all.assert_called_once_with()
     hooks.policy.allow.assert_called_once_with(types.BuiltinTools.FINISH)
     sdk.LocalAgentConfig.assert_called_once_with(
-        model=model, workspaces=["/studio"], capabilities=sdk.CapabilitiesConfig.return_value,
+        model=model, workspaces=[os.getcwd()], capabilities=sdk.CapabilitiesConfig.return_value,
         policies=[hooks.policy.deny_all.return_value, hooks.policy.allow.return_value],
     )
     sdk.Agent.assert_called_once_with(sdk.LocalAgentConfig.return_value)

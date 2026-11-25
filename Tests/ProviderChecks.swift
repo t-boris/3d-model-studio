@@ -25,7 +25,7 @@ private actor Recorder: ProviderTransport {
     func run(route: ProviderRoute, input: Data) async throws -> Data {
         let raw = String(decoding: input, as: UTF8.self)
         let json = try JSONSerialization.jsonObject(with: Data(raw.split(separator: "\n").last!.utf8)) as! [String: Any]
-        captured.append(Capture(provider: route.provider, model: route.model, arguments: route.arguments,
+        captured.append(Capture(provider: route.provider, model: route.model, arguments: route.arguments(in: URL(fileURLWithPath: "/fixture")),
                                 json: json, raw: raw))
         precondition(!replies.isEmpty, "Unexpected provider request")
         return Data(replies.removeFirst().utf8)
@@ -74,10 +74,6 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
         precondition(call.ids("vertices") == (scope.model == nil ? [] : Array(0...6)))
         precondition(call.json["unit"] as? String == (scope.model == nil ? "millimeter" : "inch"))
         precondition(!call.raw.contains("987654") && !call.raw.contains(model.name))
-        precondition(call.arguments.contains("--read-only") && call.arguments.contains("--rm"))
-        precondition(!call.arguments.contains("--mount") && !call.arguments.contains("-v"))
-        precondition(call.arguments.contains("modelstudio-" + provider.rawValue.lowercased() + ":1"))
-        precondition(call.arguments.contains(provider.credentialName))
         switch provider {
         case .codex:
             precondition(call.arguments.suffix(1) == ["-"])
@@ -86,7 +82,7 @@ private func exercise(_ provider: ModelingProvider, defaults: UserDefaults) asyn
             precondition(call.arguments.contains("--print") && call.arguments.contains("--strict-mcp-config"))
             precondition(call.arguments[call.arguments.firstIndex(of: "--tools")! + 1].isEmpty)
         case .antigravity:
-            precondition(Array(call.arguments.suffix(3)) == ["python", "/opt/studio/agent.py", call.model])
+            precondition(Array(call.arguments.suffix(3)) == ["-I", "/fixture/antigravity.py", call.model])
         }
         if provider != .antigravity { precondition(call.arguments[call.arguments.firstIndex(of: "--model")! + 1] == call.model) }
     }
@@ -175,34 +171,6 @@ let suite = "studio.provider-checks." + UUID().uuidString
 let defaults = UserDefaults(suiteName: suite)!
 defer { defaults.removePersistentDomain(forName: suite) }
 for provider in ModelingProvider.allCases { try await exercise(provider, defaults: defaults) }
-
-// Exercise Foundation Process and the anonymous streams without Docker, an
-// agent, the host environment or a network connection.
-private func exerciseProcess(_ defaults: UserDefaults) async throws {
-    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let binary = directory.appendingPathComponent("fixture")
-    let script = """
-    #!/bin/sh
-    [ "$1" = "--config" ] && [ "$2" = "$HOME" ] && [ "$3" = "--host" ] || exit 2
-    [ "$4" = "unix:///fixture.sock" ] && [ "$5" = "run" ] || exit 3
-    /bin/cat
-    """
-    try Data(script.utf8).write(to: binary)
-    try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: binary.path)
-    let bytes = Data(repeating: 65, count: 300_000)
-    for provider in ModelingProvider.allCases {
-        defaults.set(provider.rawValue, forKey: ModelingProvider.preferencesKey)
-        let route = ProviderRoute(defaults: defaults)
-        let response = try await DockerTransport().invoke(route: route, input: bytes, binary: binary.path,
-                                                          socket: "/fixture.sock", environment: [:])
-        precondition(response == bytes)
-    }
-    print("Native provider subprocess transport passed for large piped requests with a local echo fixture.")
-}
-
-try await exerciseProcess(defaults)
 
 // Some transports may deliver a response after cancellation. It must never
 // resurrect the old operation's review in the replacement operation.
