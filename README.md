@@ -1,12 +1,26 @@
 # 3D Model Studio
 
-3D Model Studio is a native macOS application with a SwiftUI interface. Use Open (Command-O) to load an STL, OBJ, Core 3MF, or multipart 3MF Production model. The importer places each build item and component in model space. Each occurrence can be edited independently. Choose the source unit for STL and OBJ. The viewport displays the active mesh and its unit. Drag to rotate and scroll to zoom.
+3D Model Studio is a native macOS application with a SwiftUI interface. Use Open (Command-O) to load an STL, OBJ, Core 3MF, or multipart 3MF Production model. The importer places each build item and component in model space. Each occurrence can be edited independently. Choose the source unit for STL and OBJ. The viewport displays the active mesh and its unit.
 
 ## Run locally
 
 On macOS 14 or later, open `ModelStudio.xcodeproj` in Xcode and run the shared `ModelStudio` scheme. It builds `ModelStudio.app` with bundle identifier `com.github.t-boris.3d-model-studio`. Open Settings from the workspace toolbar or app menu, or press Command-Comma.
 
 The [import fixtures](Fixtures/Import/README.md) include one block per format, expected geometry, and dimensions for the manual and conversational editing tasks.
+
+## Package and install on macOS
+
+On a build Mac with Xcode, `bash Scripts/package-macos.sh --local /path/to/output` builds a universal Release app and writes the ad-hoc-signed `ModelStudio-local.zip` for local testing.
+
+For direct distribution, set `MODEL_STUDIO_SIGNING_IDENTITY` to a Developer ID Application identity and `MODEL_STUDIO_NOTARY_PROFILE` to an authorized `notarytool` Keychain profile. Run `bash Scripts/package-macos.sh --release /path/to/output`. It signs the app with hardened runtime, waits for Apple notarization, staples the ticket, and writes `ModelStudio.zip` after verifying the app with macOS. [Apple distribution guide](https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution) · [Apple notarization guide](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow)
+
+On the destination Mac, double-click the release ZIP in Finder, drag `ModelStudio.app` to Applications, and open it from Applications. Open Settings to connect the providers. A release test uses a fresh download on a clean Mac without Docker Desktop and checks Finder launch, live Settings authentication, and one applied operation per provider. [Provider settings](Providers/README.md)
+
+## Navigate and edit in the viewport
+
+Use **Orbit** on the left and drag to rotate. Scroll to zoom in any mode. Click a face of the view cube to align the camera or click **Home View** to restore its starting angle and zoom.
+
+Choose **Move Point** and drag a corner. Choose **Reshape Surface**, click triangles to select them, and drag the selected surface. Both tools move geometry parallel to the screen. With **Extrude**, select one triangle or a connected flat patch and drag outward along its normal. For a straight-on view of the patch, drag upward. In an editing mode, dragging empty space still orbits the model. Use the controls below the viewport for exact offsets and units.
 
 ## Dimensions and editable files
 
