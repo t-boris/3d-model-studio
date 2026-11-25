@@ -1,4 +1,5 @@
 """Run the shipped installer on tiny vendor-shaped archives, offline on either Mac."""
+import argparse
 import base64
 import hashlib
 import io
@@ -9,7 +10,17 @@ import subprocess
 import tarfile
 import tempfile
 
-resources = Path("Providers/Runtime").resolve()
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--app", type=Path, help="Verify and exercise the Runtime folder copied into this app")
+app = parser.parse_args().app
+source = Path(__file__).resolve().parents[1] / "Providers/Runtime"
+resources = source
+if app is not None:
+    resources = app.resolve() / "Contents/Resources/Runtime"
+    for name in ("install.sh", "artifacts.tsv", "turn.sb", "antigravity.py",
+                 "requirements-arm64.txt", "requirements-x86_64.txt"):
+        assert (resources / name).read_bytes() == (source / name).read_bytes(), name
+    print(f"{app.name}: installer, manifest, sandbox, adapter and both wheel locks match the checkout.")
 installer = resources / "install.sh"
 rows = [line.split("\t") for line in (resources / "artifacts.tsv").read_text().splitlines()]
 assert {(row[0], row[1]) for row in rows} == {

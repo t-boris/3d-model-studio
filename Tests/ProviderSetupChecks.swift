@@ -39,10 +39,15 @@ private func exerciseSetup(_ defaults: UserDefaults) async throws {
           [[ -r "$2" && ${2##*/} == antigravity.py && -z "${CODEX_API_KEY:-}${ANTHROPIC_API_KEY:-}" ]] ;;
       *) exit 24 ;;
     esac
+    if [[ "$key" == "wrong-echo" ]]; then echo "Different challenge"; exit 0; fi
     [[ "$key" == "fixture-$provider" ]] || exit 25
     input=$(/bin/cat)
+    challenge='Reply with exactly this text and nothing else: STUDIO-'
     case "$input" in
-      "Reply with exactly this text and nothing else: STUDIO-"*) echo "${input##* }" ;;
+      "$challenge"*)
+        uuid=${input#"$challenge"}
+        [[ "$uuid" =~ ^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$ ]]
+        echo "STUDIO-$uuid" ;;
       *"Move the selected corner upward"*)
         [[ "$input" != *918273* && "$input" != *"Confidential import"* && "$input" == *'"targetFaceIDs":[0]'* ]]
         echo "{\"kind\":\"explanation\",\"message\":\"$provider used $model\"}" ;;
@@ -89,6 +94,9 @@ private func exerciseSetup(_ defaults: UserDefaults) async throws {
         await connections.connect(route, enteredKey: "invalid")
         checkStatus("Check your API key")
         precondition(runtime.installed(provider) != nil && credentials.keys[provider] == nil)
+        await connections.connect(route, enteredKey: "wrong-echo")
+        checkStatus("Unexpected connection reply")
+        precondition(credentials.keys[provider] == nil)
         credentials.refuseWrite = true
         await connections.connect(route, enteredKey: key)
         checkStatus("Keychain denied")
@@ -113,6 +121,9 @@ private func exerciseSetup(_ defaults: UserDefaults) async throws {
         precondition(echoed == payload)
         for model in provider.models {
             defaults.set(model, forKey: provider.modelKey)
+            let configured = ProviderRoute(defaults: defaults)
+            await reopened.connect(configured, enteredKey: "")
+            precondition(reopened.status(provider) == "Connected to \(provider.rawValue) · \(model).")
             let session = ModelingSession(transport: reopened)
             session.start(scope: .selection(try fixture(), [0]), instruction: "Move the selected corner upward", defaults: defaults)
             try await settle(session)
@@ -124,6 +135,8 @@ private func exerciseSetup(_ defaults: UserDefaults) async throws {
             _ = try await reopened.run(route: route, input: payload)
             preconditionFailure("Disconnected provider ran")
         } catch { precondition(error.localizedDescription.contains("Open Settings")) }
+        await reopened.connect(ProviderRoute(defaults: defaults), enteredKey: key)
+        precondition(reopened.status(provider).contains("Connected to") && credentials.keys[provider] == key)
         print("\(provider.rawValue): native provisioning, authentication, retry, repair, reconnect, selected-model routing, sandbox isolation and disconnect passed.")
     }
 }

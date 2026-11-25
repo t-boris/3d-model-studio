@@ -53,6 +53,8 @@ All three adapters receive the same native projection as UTF-8 JSON following th
 
 Run `Tests/run-provider-checks.sh` from the checkout. Installer fixtures exercise all six archive selections, reject mismatched checksums and verify staging. Local process and credential doubles exercise the production setup controller, failed downloads and credentials, Keychain write failure, successful retry, repair, disconnect and reconnection. Each of the six provider/model choices receives a selected-face request through the native subprocess route. The process checks also cover 300 KB payloads, exclusion of inherited credentials, fresh turn directories and denial of reads of a separate model file.
 
+After building the shared ModelStudio scheme, run `python3 Tests/RuntimePackageChecks.py --app "/path/to/ModelStudio.app"` to check the packaged resources. This compares the installed resource files with the checkout and runs the bundled installer against offline archive fixtures for Apple silicon and Intel.
+
 Release acceptance remains open. On one clean Mac without Docker Desktop, install the release app, launch it from Finder, connect each agent in Settings and apply one conversational modeling operation with each. Record the app and macOS versions, provider/model choices, connection statuses and operation results. Keep API keys out of the record.
 
 The same harness also runs the conversational geometry checks. For each route it creates a block after a clarification, revises that block and revises fresh STL, OBJ and 3MF imports. It checks physical spans, face identity, SceneKit updates and preservation of the current model after a rejection or provider failure.
