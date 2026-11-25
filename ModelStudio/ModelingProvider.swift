@@ -77,7 +77,8 @@ struct ProviderRoute {
         """
         var payload = Data((header + "\n").utf8)
         payload.append(try JSONEncoder().encode(input))
-        return try await ModelingReply(data: transport.run(route: self, input: payload))
+        let reply = try await transport.run(route: self, input: payload)
+        return try ModelingReply(data: reply)
     }
 }
 
@@ -108,6 +109,13 @@ struct DockerTransport: ProviderTransport {
         guard let socket = sockets.first(where: fm.fileExists(atPath:)) else {
             throw MeshImportError("Start the local Docker engine before sending a modeling request.")
         }
+        let environment = ProcessInfo.processInfo.environment.filter { $0.key == route.provider.credentialName }
+        return try await invoke(route: route, input: input, binary: binary, socket: socket, environment: environment)
+    }
+
+    func invoke(route: ProviderRoute, input: Data, binary: String, socket: String,
+                environment: [String: String]) async throws -> Data {
+        let fm = FileManager.default
         let dir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try fm.createDirectory(at: dir, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         defer { try? fm.removeItem(at: dir) }
@@ -120,7 +128,7 @@ struct DockerTransport: ProviderTransport {
         process.arguments = ["--config", dir.path, "--host", "unix://" + socket] + route.arguments
         // Docker forwards only the named key. No user Docker configuration, proxy
         // settings, host directories, sockets or prior session are passed inside.
-        process.environment = ProcessInfo.processInfo.environment.filter { $0.key == route.provider.credentialName }
+        process.environment = environment.merging(["HOME": dir.path]) { _, isolated in isolated }
         process.currentDirectoryURL = dir
         process.standardInput = stdin
         process.standardOutput = stdout

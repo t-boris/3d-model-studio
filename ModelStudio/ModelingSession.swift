@@ -32,7 +32,7 @@ final class ModelingSession: ObservableObject {
             if allow {
                 dispatch()
             } else {
-                finish("The agent requested those faces because: \(review.reason) Access was declined. The request ended with the available geometry.")
+                finish("Access declined. The agent requested these faces for the following reason. \(review.reason) The request has ended.")
             }
         } catch { finish(error.localizedDescription) }
     }
