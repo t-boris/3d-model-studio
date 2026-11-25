@@ -191,3 +191,11 @@ Current plan I-6 is in progress. REQ-007’s indexed report already receives the
 ### Agent · 2026-11-25
 
 Current plan I-6 is complete in b3bfd0d. The inspector outlines collapsed and occluded faces, draws the exact problem edge, retains corrective guidance and scope, and names the 3MF occurrence. Interpreted production checks verified failure, stale state and repair through Move Point on seven model origins, through twelve scripted whole-model paths, and through nine scripted multipart selection paths. All five defect types and exact face and edge identities were checked. Assembly, dimension and macOS 14 source regressions passed. Build and deployment were disabled. The pre-existing tasks/todo.md was left untouched at the supervisor’s direction.
+
+### Agent · 2026-11-25
+
+I-7 is in progress. Existing version-1 files store indexed geometry, model units and pins. Recent version-1 files can also contain assembly metadata in the mesh. The save and Open commands currently lack a saved baseline and Quit has no workspace guard. I-7 will retain both archive variants and coordinate the prompt, save, replacement and macOS termination paths.
+
+### Agent · 2026-11-25
+
+I-7 is complete at da7cded. The workspace file suite passed for a historical v1 save and a newly saved repeated assembly with its source copy removed. The shared Open and Quit flow passed geometry and independent pin changes, successful saves, discard, cancellation and failed replacements. An interpreted AppKit harness exercised Cancel and Discard Changes through the native termination delegate. The assembly, dimension, manual/print and offline provider suites passed, and app sources type-checked for macOS 14 with warnings as errors. Build and deployment were disabled. The archive mappings for export are verified. Core 3MF export acceptance remains in I-8.
