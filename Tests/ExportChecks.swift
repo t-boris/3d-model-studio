@@ -150,28 +150,49 @@ func checkAssemblyExport(_ name: String, low: [SIMD3<Double>], high: [SIMD3<Doub
     print("\(name): edited occurrence 2, all world corners and bounds, hierarchy, winding and source-independent reopen passed.")
 }
 
-func checkConversionFailure() throws {
+@MainActor
+func checkConversionFailure() async throws {
     // Force cancellation of significant digits during inversion of the build placement.
     // The source is printable, but re-reading the actual package produces collapsed faces.
     var mesh = try WorkspaceModel.newBlock().mesh
+    // Replacing the first face gives it a workspace ID outside the serialized range.
+    let corners = mesh.faces[0].vertices
+    mesh.removeFaces(withIDs: [0])
+    let replacementID = mesh.nextFaceID
+    mesh.addFace(corners.x, corners.y, corners.z)
     let id = ThreeMFAssembly.ObjectID(part: "model", id: 1)
     let item = try ThreeMFAssembly.Reference(object: id, transform: .init("1 0 0 0 1 0 0 0 1 1e18 0 0"), uuid: nil)
     mesh.assembly = ThreeMFAssembly(startPart: id.part, buildItems: [item],
         objects: [id: .init(name: nil, unit: .millimeter, components: [])],
-        occurrences: [.init(object: id, buildIndex: 0, componentIndices: [], importedVertices: 0..<8, importedFaceIDs: 0..<12)])
-    let model = try WorkspaceModel(name: "extreme placement", unit: .millimeter, mesh: mesh)
-    precondition(PrintGeometryReport(mesh: mesh).passed)
-    do {
-        _ = try CoreThreeMFExport(model: model)
-        fatalError("A workspace pass cannot authorize a collapsed serialized surface")
-    } catch let failure as CoreThreeMFExport.InvalidGeometry {
-        precondition(failure.report.issues.contains { $0.problem == .degenerate && $0.faces == [0] })
-    }
-    print("Rejected a collapsed serialized mesh even though its workspace snapshot passed.")
+        occurrences: [.init(object: id, buildIndex: 0, componentIndices: [], importedVertices: 0..<8,
+                            importedFaceIDs: 0..<12, addedFaceIDRanges: [replacementID..<mesh.nextFaceID])])
+    let dialogs = ScriptedFileDialogs(choice: .discard)
+    let workspace = Workspace(dialogs: dialogs)
+    try workspace.commitCreation(mesh, unit: .millimeter, requested: [])
+    await workspace.validatePrintGeometry()
+    guard case .current(let source) = workspace.printValidation, source.passed else { fatalError("Expected a printable source") }
+
+    let destination = output.appendingPathComponent("precision-repaired.3mf")
+    let existing = try Data(contentsOf: output.appendingPathComponent("created.3mf"))
+    try existing.write(to: destination)
+    dialogs.destination = destination
+    let result = await workspace.exportCore3MF()
+    precondition(result == .invalidGeometry && dialogs.events.isEmpty && workspace.activeModel?.mesh == mesh)
+    guard case .current(let report) = workspace.printValidation else { fatalError("Expected readback failure in the inspector") }
+    precondition(report.issues.contains { $0.problem == .degenerate && $0.faces == [replacementID] })
+    precondition(report.issues.allSatisfy { !$0.faces.contains(0) })
+    let retained = try Data(contentsOf: destination)
+    precondition(retained == existing)
+
+    // 256 mm survives the round trip through this extreme translation exactly.
+    precondition(workspace.resize(to: .init(dimension: .width, value: 256, unit: .millimeter), changingPin: false))
+    let repaired = try await writeExport(workspace, dialogs, destination.lastPathComponent)
+    precondition(repaired.extents == [256, 10, 10])
+    print("Serialized collapse identified workspace face \(replacementID), preserved destination bytes, and exported after repair.")
 }
 
 try await checkWorkspaceExport()
-try checkConversionFailure()
+try await checkConversionFailure()
 try await checkAssemblyExport("repeated-block", low: [[88, 55, 10], [88, 90, 10], [200, 0, 0]],
                               high: [[98, 75, 15], [98, 110, 17], [220, 10, 5]])
 try await checkAssemblyExport("bambu-blocks", low: [[90.00001, 100.99999, 0], [90, 89.00003, 0]],
