@@ -18,23 +18,29 @@ private func checkDirtyChanges(_ directory: URL) async throws {
             let workspace = Workspace(dialogs: dialogs)
             if imported {
                 await workspace.open(fixtures.appendingPathComponent("block.obj"))
-                workspace.acceptUnit(.millimeter)
+                workspace.acceptUnit(.centimeter)
                 precondition(!workspace.hasUnsavedChanges)
             } else {
                 workspace.newBlock()
                 precondition(workspace.hasUnsavedChanges)
             }
             if change == "change pin" || change == "remove pin" { workspace.pinCurrent(.width) }
-            dialogs.destination = directory.appendingPathComponent("baseline.studio3d")
+            let archive = directory.appendingPathComponent("baseline.studio3d")
+            dialogs.destination = archive
             let saved = await workspace.save()
             precondition(saved && !workspace.hasUnsavedChanges)
             let before = workspace.activeModel!
+            let restored = try EditableModelFile.read(archive)
+            precondition(restored.mesh == before.mesh && restored.pins == before.pins)
+            precondition(restored.unit == (imported ? .centimeter : .millimeter))
             switch change {
             case "geometry": try workspace.applyManualEdit(.movePoint(0, axis: .height), basedOn: before,
                                                           distance: 0.25, unit: .millimeter)
             case "add pin": workspace.pinCurrent(.width)
             case "change pin":
-                let target = DimensionTarget(dimension: .width, value: before.extents.x / 10, unit: .centimeter)
+                let unit: MeshUnit = imported ? .millimeter : .centimeter
+                let value = before.extents.x * before.unit.millimetersPerUnit / unit.millimetersPerUnit
+                let target = DimensionTarget(dimension: .width, value: value, unit: unit)
                 precondition(workspace.resize(to: target, changingPin: true))
             default: workspace.unpin(.width)
             }
@@ -102,12 +108,18 @@ private func checkInterruptions(_ directory: URL) async throws {
     let invalidUnit = directory.appendingPathComponent("overflow.obj")
     try "v 0 0 0\nv 1e307 0 0\nv 0 1 0\nf 1 2 3\n".write(to: invalidUnit, atomically: true, encoding: .utf8)
     let missing = directory.appendingPathComponent("missing.studio3d")
-    for scenario in ["picker canceled", "picker failed", "read failed", "units canceled", "units failed"] {
+    let unsupported = directory.appendingPathComponent("unsupported.studio3d")
+    let legacyData = try Data(contentsOf: legacy)
+    var archive = try JSONSerialization.jsonObject(with: legacyData) as! [String: Any]
+    archive["version"] = 99
+    try JSONSerialization.data(withJSONObject: archive).write(to: unsupported)
+    for scenario in ["picker canceled", "picker failed", "read failed", "version failed", "units canceled", "units failed"] {
         workspace.modelError = nil
         dialogs.events.removeAll()
         switch scenario {
         case "picker failed": dialogs.source = .failure(MeshImportError("Picker unavailable"))
         case "read failed": dialogs.source = .success(missing)
+        case "version failed": dialogs.source = .success(unsupported)
         case "units canceled": dialogs.source = .success(fixtures.appendingPathComponent("block.stl"))
         case "units failed": dialogs.source = .success(invalidUnit)
         default: dialogs.source = .success(nil)
@@ -126,6 +138,9 @@ private func checkInterruptions(_ directory: URL) async throws {
         retained(workspace, edited)
         precondition(workspace.hasUnsavedChanges && workspace.canStartFileOperation)
         precondition((workspace.modelError != nil) == scenario.hasSuffix("failed"))
+        if scenario == "version failed" {
+            precondition(workspace.modelError?.contains("Unsupported Model Studio file version 99.") == true)
+        }
         precondition(dialogs.events == ["confirm open", "open"])
     }
 
@@ -146,6 +161,10 @@ private func checkInterruptions(_ directory: URL) async throws {
     let quitArchive = try EditableModelFile.read(destination)
     precondition(savedQuit && quitArchive.pins == restored.pins && !workspace.hasUnsavedChanges)
     let lastSave = try Data(contentsOf: destination)
+    let reopened = Workspace(dialogs: dialogs)
+    await reopened.open(destination)
+    precondition(reopened.activeModel?.mesh == edited.mesh && reopened.activeModel?.unit == edited.unit)
+    precondition(reopened.resize(to: .init(dimension: .height, value: 9, unit: .millimeter), changingPin: false))
     workspace.pinCurrent(.depth)
     dialogs.choice = .discard
     dialogs.events.removeAll()
@@ -194,14 +213,19 @@ private func checkStandaloneAssembly(_ directory: URL) async throws {
     }
     let wall = original.mesh.nextFaceID
     precondition(groups[1]!.contains(wall))
-    reopened.unpin(.width)
+    let width = model.pins[0]
+    let conflictingWidth = DimensionTarget(dimension: width.dimension, value: width.value + 1, unit: width.unit)
+    precondition(!reopened.resize(to: conflictingWidth, changingPin: false))
+    precondition(reopened.modelError?.contains("Pinned Width (X)") == true && !reopened.hasUnsavedChanges)
+    retained(reopened, model)
     try reopened.applyManualEdit(.extrude([wall]), basedOn: reopened.activeModel!, distance: 0.1, unit: .millimeter)
     let nextMesh = reopened.activeModel!.mesh
+    precondition(reopened.activeModel!.pins == model.pins)
     precondition(nextMesh.nextFaceID > model.mesh.nextFaceID)
     for face in nextMesh.faces where face.id >= model.mesh.nextFaceID {
         precondition(nextMesh.assembly!.occurrences[1].contains(faceID: face.id))
     }
-    print("Edited assembly reopened after source removal with original hierarchy, transforms, occurrences, stable IDs and generated wall ownership. Further wall extrusion passed.")
+    print("Edited assembly reopened after source removal with its hierarchy, transforms, occurrences, stable IDs and wall ownership. A conflicting width was rejected, and further wall extrusion passed with the restored pin in force.")
 }
 
 let fileCheckDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
