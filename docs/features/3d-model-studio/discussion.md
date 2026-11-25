@@ -75,3 +75,7 @@ I-3 in progress. REQ-008 records the editable save and reopen obligation of DEC-
 ### Codex · 2026-11-25
 
 I-3 implementation complete in faf6658, following specification commit db8881f. The workspace supports explicit pins, a shared geometry commit path and versioned editable save/open. Tests/run-dimension-checks.sh passed for a new block and all three import fixtures, including failed proposals and damaged saves. The app sources type-check for macOS 14. Building was disabled, so interactive file panels and UI gestures await a build-enabled pass. Subsequent manual tools, provider workflows, selection confirmation and slicer export remain in their respective steps.
+
+### Agent · 2026-11-25
+
+I-4 started on the I-3 workspace. The manual tool scope is recorded in REQ-004. Verification will exercise the same production edit and commit path on the new block and each of the three I-2 fixtures.
